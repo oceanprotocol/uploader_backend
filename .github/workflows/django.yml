@@ -23,8 +23,13 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
       run: |
+        git submodule init
+        git submodule update
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Run Migration
+      run: |
+        python server/manage.py migrate
     - name: Run Tests
       run: |
         python server/manage.py test
