@@ -84,8 +84,19 @@ if settings.DEBUG:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
+elif os.getenv('GITHUB_WORKFLOW'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'github-actions',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': 'localhost',
+            'PORT': '5432'
+        }
+    }
 else:
-    # Switch to pgsql database from github action
+    #TODO: Switch to pgsql database for staging/production
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
