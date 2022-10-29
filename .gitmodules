@@ -1,0 +1,3 @@
+[submodule "ocean-dbs"]
+	path = ocean-dbs
+	url = git@git.startinblox.com:applications/oceandbs/ocean-dbs.git
