@@ -11,14 +11,18 @@ To Be Added after configuration of the CI on Github
 ## Installation
 This is a server-side API based on Python and Django/DRF so first make sure you have python and pip installed.
 
-Then, use virtualenv to isolate your development environment and setup the virtual env for this project.
+First, clone this project. Then, go on the root directory and make sure you install the submodule. The actual code of the oceandbs package is still stored on https://git.startinblox.com/applications/oceandbs/ocean-dbs/ and will be moved in a near future.
 
-The server can be run using the `./manage.py runserver` method.
+To install the submodule, please use `git submodule update`
+
+Then, use virtualenv to isolate your development environment and setup the virtual env for this project: `python -m virtualenv venv`
+
+The server can be run using the `./manage.py runserver` method from the `./server/` directory
 
 You can create a superuser with `./manage.py createsuperuser` to be able to access the back-office
 
 ## Usage
-You can navigate the API using the url `http://myserver.com/docs/` (Swagger based OpenAPI documentation).
+You can navigate the API using the url `http://myserver.com/docs/` (Swagger based OpenAPI documentation, default on localhost:8000).
 
 ## Support
 Please open issues on github if you need support of have any questions.
