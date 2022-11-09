@@ -18,6 +18,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path("", include("oceandbs.urls")),
     path("schema/", SpectacularAPIView.as_view(api_version='v1'), name="schema"),
     path(
