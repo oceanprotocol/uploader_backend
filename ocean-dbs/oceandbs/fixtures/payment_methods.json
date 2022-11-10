@@ -1,0 +1,12 @@
+[
+  {
+    "model": "oceandbs.paymentmethod",
+    "pk": 1,
+    "fields": { "chain_id": "1", "storage": 1 }
+  },
+  {
+    "model": "oceandbs.paymentmethod",
+    "pk": 2,
+    "fields": { "chain_id": "polygon_chain_id", "storage": 1 }
+  }
+]
