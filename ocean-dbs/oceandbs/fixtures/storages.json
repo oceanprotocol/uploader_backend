@@ -50,7 +50,8 @@
     "pk": 1,
     "fields": {
       "type": "filecoin",
-      "description": "The file coin storage description."
+      "description": "The file coin storage description.",
+      "url": "https://filecoin.org/"
     }
   },
   {
