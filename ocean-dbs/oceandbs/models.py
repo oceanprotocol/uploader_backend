@@ -18,6 +18,7 @@ UPLOAD_CODE = [
 class Storage(models.Model):
   type = models.CharField(max_length=256, verbose_name=_("Storage type"))
   description= models.TextField(verbose_name = _("Storage description"), null=True, blank=True)
+  url = models.URLField(max_length=2048, default="https://example.com")
 
   def __str__(self):
       return self.type + " - " + self.description
