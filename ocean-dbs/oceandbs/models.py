@@ -16,20 +16,23 @@ UPLOAD_CODE = [
 
 # Create your models here.
 class Storage(models.Model):
+  created = models.DateTimeField(auto_now_add=True)
   type = models.CharField(max_length=256, verbose_name=_("Storage type"))
   description= models.TextField(verbose_name = _("Storage description"), null=True, blank=True)
   url = models.URLField(max_length=2048, default="https://example.com")
 
   def __str__(self):
-      return self.type + " - " + self.description
+    return self.type + " - " + self.description
 
+  class Meta:
+    ordering = ['created']
 
 class PaymentMethod(models.Model):
   chain_id = models.CharField(max_length=256)
   storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="payment_methods")
 
   def __str__(self):
-      return self.chain_id + " - " + self.storage.type
+    return self.chain_id + " - " + self.storage.type
 
 
 class AcceptedToken(models.Model):
@@ -38,7 +41,7 @@ class AcceptedToken(models.Model):
   payment_method = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="accepted_tokens")
 
   def __str__(self):
-      return str(self.payment_method) + " - " + self.title + " - " + self.value
+    return str(self.payment_method) + " - " + self.title + " - " + self.value
 
 
 class Payment(models.Model):
@@ -48,6 +51,7 @@ class Payment(models.Model):
 
 
 class Quote(models.Model):
+  created = models.DateTimeField(auto_now_add=True)
   storage = models.ForeignKey(Storage, null = True, on_delete=models.SET_NULL, related_name ="quotes")
   duration = models.BigIntegerField()
   payment = models.OneToOneField(Payment, null=True, blank=True, related_name = "quote", on_delete=models.CASCADE)
@@ -55,7 +59,10 @@ class Quote(models.Model):
   upload_status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
   # class Meta:
   def __str__(self):
-      return str(self.storage) + " - " + self.wallet_address
+    return str(self.storage) + " - " + self.wallet_address
+
+  class Meta:
+    ordering = ['created']
 
 
 
