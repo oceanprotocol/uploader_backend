@@ -9,6 +9,8 @@ import random
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 from .serializers import StorageSerializer, QuoteSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
@@ -83,19 +85,31 @@ class QuoteList(APIView):
     else: return Response('Storage service response badly formatted', status=400)
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
-class QuoteDetail(APIView):
+class QuoteStatus(APIView):
   @csrf_exempt
-  def get(request, pk):
+  def get(self, request, quoteId):
     """
-    Retrieve a quote
+    Retrieve a quote status from the associated micro-service
     """
     try:
-      quote = Quote.objects.get(pk=pk)
+      quote = Quote.objects.get(quoteId=quoteId)
+
+      # Request status of quote from micro-service
+      response = requests.get(
+        quote.storage.url + 'quote/' + str(quoteId)
+      )
+
+      if (response.status_code == 200):
+        quote.upload_status = json.loads(response.content)['status']
+        quote.save()
+
     except Quote.DoesNotExist:
       return HttpResponse(status=404)
 
-    serializer = QuoteSerializer(quote)
-    return Response(serializer.data)
+    return Response({
+      'status': quote.upload_status
+    })
+
 
 class UploadFile(APIView):
   @csrf_exempt
@@ -127,7 +141,7 @@ class UploadFile(APIView):
 
       # Upload files to micro-service
       response = requests.post(
-        'https://filecoin.org/upload/',
+        quote.storage.url + 'upload/',
         {
           "quoteId": quote.quoteId,
           "nonce": params['nonce'][0],
