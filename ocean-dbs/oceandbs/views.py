@@ -55,23 +55,17 @@ class QuoteList(APIView):
       return Response("Invalid input data.", status=400)
 
     # From type, retrieve associated storage object
-    storage = Storage.objects.get(type=data.pop('type'))
-
-    # If not exists, raise error
-    if not storage:
-      return Response('Chosen storage type does not exist', status=400)
+    try:
+      storage = Storage.objects.get(type=data.pop('type'))
+      # If not exists, raise error
+    except:
+      return Response('Chosen storage type does not exist.', status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
-    if (storage.type == 'filecoin'):
-      response = requests.post(
-        settings.FILECOIN_SERVICE_URL + '/getQuote/',
-        data
-      )
-    elif (storage.type == 'arweave'):
-      response = requests.post(
-        settings.ARWEAVE_SERVICE_URL + '/getQuote/',
-        data
-      )
+    response = requests.post(
+      storage.url + 'getQuote/',
+      data
+    )
 
     # From the response data:
     if response and response.status_code == 200:

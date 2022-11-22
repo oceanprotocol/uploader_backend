@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import File, AcceptedToken, Quote, Storage, PaymentMethod, Payment, PAYMENT_STATUS, UPLOAD_CODE
-from django.utils.encoding import force_str
+
 
 class TokensSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
