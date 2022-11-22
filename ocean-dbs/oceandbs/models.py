@@ -12,7 +12,8 @@ PAYMENT_STATUS = [
 
 UPLOAD_CODE = [
   ('200', 'Quote exists'),
-  ('201', 'Quote created')
+  ('201', 'Quote created'),
+  ('202', 'Files uploaded'),
 ]
 
 # Create your models here.
@@ -70,10 +71,10 @@ class Quote(models.Model):
 
 
 class File(models.Model):
-    original_url = models.CharField(max_length=255, null=True)
-    content_type = models.CharField(max_length=255, default='None')
-    stored_url = models.CharField(max_length=255, blank=True, null=True)
-    object_content = models.BinaryField(blank=True)
-    is_bytes = models.BooleanField(default=False)
-    quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
-    length = models.BigIntegerField(default=0)
+  public_url = models.CharField(max_length=255, null=True)
+  quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
+  length = models.BigIntegerField(default=0)
+  file = models.FileField(null=True, blank=True)
+
+  def __str__(self):
+    return str(self.quote) + " - " + str(self.length)

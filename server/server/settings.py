@@ -166,3 +166,4 @@ SPECTACULAR_SETTINGS = {
 ###################"#####
 FILECOIN_SERVICE_URL = 'https://storage.filecoin.com'
 ARWEAVE_SERVICE_URL = 'https://storage.arweave.com'
+DEFAULT_FILE_STORAGE = 'ipfs_storage.InterPlanetaryFileSystemStorage'

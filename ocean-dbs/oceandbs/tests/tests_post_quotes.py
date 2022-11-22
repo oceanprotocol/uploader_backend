@@ -45,8 +45,8 @@ class TestGetQuoteEndpoint(APITestCase):
     }
 
     responses.post(
-        url= 'https://filecoin.org/getQuote/',
-        json={
+      url= 'https://filecoin.org/getQuote/',
+      json={
         'tokenAmount': 500,
         'approveAddress': '0x123',
         'chainId': 1,
