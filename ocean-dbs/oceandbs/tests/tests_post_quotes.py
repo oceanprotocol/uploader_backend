@@ -62,7 +62,6 @@ class TestGetQuoteEndpoint(APITestCase):
       content_type='application/json'
     )
 
-    print(response.data)
     self.assertEqual(response.status_code, 201)
     self.assertNotEqual(response.status_code, 400)
 
