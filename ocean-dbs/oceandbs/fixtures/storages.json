@@ -64,7 +64,7 @@
       "payment": null,
       "tokenAddress": "0xOCEAN_on_MAINNET",
       "approveAddress": "0x123",
-      "upload_status": null
+      "status": null
     }
   }
 ]

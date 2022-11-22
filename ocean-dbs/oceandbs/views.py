@@ -5,10 +5,13 @@ from django.utils.encoding import force_str
 import requests
 import json
 import random
-
+from rest_framework import serializers
+from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
 from .serializers import StorageSerializer, QuoteSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
@@ -28,15 +31,43 @@ class StorageList(APIView):
 # Quote creation endpoint
 class QuoteList(APIView):
   @csrf_exempt
-  def get(self, request, format=None):
-    """
-    GET the quote list, handle different error code
-    """
-    quotes = Quote.objects.all()
-    serializer = QuoteSerializer(quotes, many=True)
-    return Response(serializer.data, status=200)
-
-  @csrf_exempt
+  @extend_schema(
+    # extra parameters added to the schema
+    parameters=[],
+    examples=[
+      OpenApiExample(
+        'Request body example',
+        value={
+          "type": "filecoin",
+          "files": [
+            {"length":2343545},
+            {"length":2343545}
+          ],
+          "duration": 4353545453,
+          "payment": {
+              "payment_method": {
+                "chainId": 1,
+              },
+              "wallet_address": "0xOCEAN_on_MAINNET"
+          },
+          "userAddress": "0x456"
+        }
+      )
+    ],
+    responses={
+       200: inline_serializer(
+          name='Response body example',
+          fields={
+            'tokenAmount': serializers.IntegerField(),
+            'approveAddress': serializers.CharField(),
+            'chainId': serializers.IntegerField(),
+            'tokenAddress': serializers.CharField(),
+            'tokenAddress': serializers.CharField(),
+          },
+       ), 
+       400: OpenApiResponse(description='Missing callsign'),
+    }
+  )
   def post(self, request, format=None):
     """
     POST a quote, handle different error code
@@ -83,19 +114,56 @@ class QuoteList(APIView):
     else: return Response('Storage service response badly formatted', status=400)
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
-class QuoteDetail(APIView):
+class QuoteStatus(APIView):
   @csrf_exempt
-  def get(request, pk):
+  def get(self, request, quoteId):
     """
-    Retrieve a quote
+    Retrieve a quote status from the associated micro-service
     """
     try:
-      quote = Quote.objects.get(pk=pk)
+      quote = Quote.objects.get(quoteId=quoteId)
+
+      # Request status of quote from micro-service
+      response = requests.get(
+        quote.storage.url + 'quote/' + str(quoteId)
+      )
+
+      if (response.status_code == 200):
+        quote.status = json.loads(response.content)['status']
+        quote.save()
+
     except Quote.DoesNotExist:
       return HttpResponse(status=404)
 
-    serializer = QuoteSerializer(quote)
-    return Response(serializer.data)
+    return Response({
+      'status': quote.status
+    })
+
+class QuoteLink(APIView):
+  @csrf_exempt
+  def get(self, request, quoteId):
+    """
+    Retrieve a quote status from the associated micro-service
+    """
+    try:
+      quote = Quote.objects.get(quoteId=quoteId)
+      params = {**request.GET}
+
+      if not all(key in params for key in ('nonce', 'signature')):
+        return Response("Missing query parameters.", status=400)  
+
+      # Request status of quote from micro-service
+      response = requests.get(
+        quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
+      )
+
+    except Quote.DoesNotExist:
+      return HttpResponse(status=404)
+
+    return Response({
+      "type": quote.storage.type,
+      "CID": json.loads(response.content)[0]['CID']
+    })
 
 class UploadFile(APIView):
   @csrf_exempt
@@ -103,7 +171,7 @@ class UploadFile(APIView):
     params = {**request.GET}
 
     if not all(key in params for key in ('quoteId', 'nonce', 'signature')):
-      return Response("Missing query parameters.", status=400)  
+      return Response("Missing query parameters.", status=400)
 
     if not request.FILES and not request.FILES['file']:
       return Response("No file sent alongside the request.", status=400)
@@ -127,7 +195,7 @@ class UploadFile(APIView):
 
       # Upload files to micro-service
       response = requests.post(
-        'https://filecoin.org/upload/',
+        quote.storage.url + 'upload/',
         {
           "quoteId": quote.quoteId,
           "nonce": params['nonce'][0],
@@ -137,7 +205,7 @@ class UploadFile(APIView):
       )
 
       #TODO: Arrange upload codes
-      quote.upload_status = UPLOAD_CODE[2]
+      quote.status = UPLOAD_CODE[2]
       quote.save()
 
       if (response.status_code == 200):

@@ -19,7 +19,7 @@ class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
 
 class QuoteAdmin(admin.ModelAdmin):
-    fields = ['storage', 'duration', 'payment', 'wallet_address', 'upload_status']
+    fields = ['storage', 'duration', 'payment', 'wallet_address', 'status']
     readonly_fields = ('id',)
 
 class FileAdmin(admin.ModelAdmin):
