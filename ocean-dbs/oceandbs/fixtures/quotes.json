@@ -1,0 +1,13 @@
+[
+  {
+    "model": "oceandbs.quote",
+    "pk": 1,
+    "fields": {
+      "storage": 1,
+      "duration": 2380293823,
+      "payment": null,
+      "wallet_address": "0x456",
+      "upload_status": null
+    }
+  }
+]
