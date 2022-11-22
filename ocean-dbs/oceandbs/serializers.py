@@ -50,7 +50,7 @@ class QuoteSerializer(serializers.ModelSerializer):
   files = FileSerializer(many=True)
   class Meta:
     model = Quote
-    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'payment', 'tokenAddress', 'approveAddress', 'upload_status', 'files']
+    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'payment', 'tokenAddress', 'approveAddress', 'status', 'files']
 
   def create(self, validated_data):
     payment_data = validated_data.pop('payment')

@@ -11,8 +11,13 @@ PAYMENT_STATUS = [
 ]
 
 UPLOAD_CODE = [
-  ('200', 'Quote exists'),
-  ('201', 'Quote created')
+  ('0', 'No such quote'),
+  ('1', 'Waiting for files to be uploaded'),
+  ('100', 'Processing payment'),
+  ('200', 'Processing payment failure modes'),
+  ('300', 'Uploading file to storage'),
+  ('400', 'Upload done'),
+  ('401', 'Upload failure modes'),
 ]
 
 # Create your models here.
@@ -60,7 +65,7 @@ class Quote(models.Model):
   tokenAddress = models.CharField(max_length=256, null = True)
   approveAddress = models.CharField(max_length=256, null = True)
   tokenAmount = models.BigIntegerField(null = True)
-  upload_status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
+  status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
 
   def __str__(self):
     return str(self.storage) + " - " + self.tokenAddress
@@ -70,10 +75,10 @@ class Quote(models.Model):
 
 
 class File(models.Model):
-    original_url = models.CharField(max_length=255, null=True)
-    content_type = models.CharField(max_length=255, default='None')
-    stored_url = models.CharField(max_length=255, blank=True, null=True)
-    object_content = models.BinaryField(blank=True)
-    is_bytes = models.BooleanField(default=False)
-    quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
-    length = models.BigIntegerField(default=0)
+  public_url = models.CharField(max_length=255, null=True)
+  quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
+  length = models.BigIntegerField(default=0)
+  file = models.FileField(null=True, blank=True)
+
+  def __str__(self):
+    return str(self.quote) + " - " + str(self.length)

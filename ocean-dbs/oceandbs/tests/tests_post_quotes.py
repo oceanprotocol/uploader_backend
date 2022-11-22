@@ -12,20 +12,6 @@ class TestGetQuoteEndpoint(APITestCase):
     self.factory = APIRequestFactory()
     self.client = APIClient()
 
-  def test_get_quotes_endpoint(self):
-    response = self.client.get('/quotes/')
-
-    # Assert proper HTTP status code
-    self.assertEqual(response.status_code, 200)
-
-    # Assert content of the response itself, pure JSON
-    self.assertEqual(len(response.data), 1)
-
-    # Assert content of the response itself, pure JSON
-    self.assertEqual(response.data[0]['duration'], 2380293823)
-    self.assertEqual(response.data[0]['tokenAddress'], '0xOCEAN_on_MAINNET')
-    self.assertEqual(response.data[0]['approveAddress'], '0x123')
-
   @responses.activate
   def test_quote_creation(self):
     body = {
@@ -45,8 +31,8 @@ class TestGetQuoteEndpoint(APITestCase):
     }
 
     responses.post(
-        url= 'https://filecoin.org/getQuote/',
-        json={
+      url= 'https://filecoin.org/getQuote/',
+      json={
         'tokenAmount': 500,
         'approveAddress': '0x123',
         'chainId': 1,

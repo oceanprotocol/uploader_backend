@@ -58,12 +58,13 @@
     "model": "oceandbs.quote",
     "pk": 1,
     "fields": {
+      "quoteId": "123565",
       "storage": 1,
       "duration": 2380293823,
       "payment": null,
       "tokenAddress": "0xOCEAN_on_MAINNET",
       "approveAddress": "0x123",
-      "upload_status": null
+      "status": null
     }
   }
 ]
