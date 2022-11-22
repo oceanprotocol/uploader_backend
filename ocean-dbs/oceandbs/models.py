@@ -29,26 +29,26 @@ class Storage(models.Model):
     ordering = ['created']
 
 class PaymentMethod(models.Model):
-  chain_id = models.CharField(max_length=256)
-  storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="payment_methods")
+  chainId = models.CharField(max_length=256)
+  storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="paymentMethods")
 
   def __str__(self):
-    return self.chain_id + " - " + str(self.storage)
+    return self.chainId + " - " + str(self.storage)
 
 
 class AcceptedToken(models.Model):
   title = models.CharField(max_length=256)
   value = models.CharField(max_length=256)
-  payment_method = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="accepted_tokens")
+  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="acceptedTokens")
 
   def __str__(self):
-    return str(self.payment_method) + " - " + self.title + " - " + self.value
+    return str(self.paymentMethod) + " - " + self.title + " - " + self.value
 
 
 class Payment(models.Model):
-  status = models.CharField(choices = PAYMENT_STATUS, max_length = 256, null = True)
+  status = models.CharField(choices = PAYMENT_STATUS, default=PAYMENT_STATUS[0], max_length = 256)
   wallet_address = models.CharField(max_length=256, null = True)
-  payment_method = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="payments")
+  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="payments")
 
 
 class Quote(models.Model):

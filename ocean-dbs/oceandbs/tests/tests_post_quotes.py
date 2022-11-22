@@ -37,7 +37,7 @@ class TestGetQuoteEndpoint(APITestCase):
       "duration": 4353545453,
       "payment": {
           "payment_method": {
-            "chain_id": 1,
+            "chainId": 1,
           },
           "wallet_address": "0xOCEAN_on_MAINNET"
       },
@@ -62,6 +62,7 @@ class TestGetQuoteEndpoint(APITestCase):
       content_type='application/json'
     )
 
+    print(response.data)
     self.assertEqual(response.status_code, 201)
     self.assertNotEqual(response.status_code, 400)
 
@@ -85,7 +86,7 @@ class TestGetQuoteEndpoint(APITestCase):
       "duration": 4353545453,
       "payment": {
           "payment_method": {
-            "chain_id": 1,
+            "chainId": 1,
           },
           "wallet_address": "0xOCEAN_on_MAINNET"
       },
@@ -112,7 +113,7 @@ class TestGetQuoteEndpoint(APITestCase):
       "duration": 4353545453,
       "payment": {
           "payment_method": {
-            "chain_id": 1,
+            "chainId": 1,
           },
           "wallet_address": "0xOCEAN_on_MAINNET"
       },

@@ -2,12 +2,12 @@
   {
     "model": "oceandbs.paymentmethod",
     "pk": 1,
-    "fields": { "chain_id": "1", "storage": 1 }
+    "fields": { "chainId": "1", "storage": 1 }
   },
   {
     "model": "oceandbs.paymentmethod",
     "pk": 2,
-    "fields": { "chain_id": "polygon_chain_id", "storage": 1 }
+    "fields": { "chainId": "polygon_chain_id", "storage": 1 }
   },
   {
     "model": "oceandbs.acceptedtoken",
@@ -15,7 +15,7 @@
     "fields": {
       "title": "OCEAN",
       "value": "0xOCEAN_on_MAINNET",
-      "payment_method": 1
+      "paymentMethod": 1
     }
   },
   {
@@ -24,7 +24,7 @@
     "fields": {
       "title": "DAI",
       "value": "0xDAI_ON_MAINNET",
-      "payment_method": 1
+      "paymentMethod": 1
     }
   },
   {
@@ -33,7 +33,7 @@
     "fields": {
       "title": "OCEAN",
       "value": "0xOCEAN_on_POLYGON",
-      "payment_method": 2
+      "paymentMethod": 2
     }
   },
   {
@@ -42,7 +42,7 @@
     "fields": {
       "title": "DAI",
       "value": "0xDAI_ON_POLYGON",
-      "payment_method": 2
+      "paymentMethod": 2
     }
   },
   {

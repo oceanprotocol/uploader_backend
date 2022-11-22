@@ -7,7 +7,7 @@ class AcceptedTokenAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
 
 class PaymentMethodAdmin(admin.ModelAdmin):
-    fields = ['chain_id', 'storage']
+    fields = ['chainId', 'storage']
     readonly_fields = ('id',)
 
 class StorageAdmin(admin.ModelAdmin):

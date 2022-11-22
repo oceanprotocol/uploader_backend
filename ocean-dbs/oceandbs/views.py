@@ -74,6 +74,7 @@ class QuoteList(APIView):
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
+      data['payment']['paymentMethod'] = data['payment'].pop('payment_method')
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
@@ -82,7 +83,7 @@ class QuoteList(APIView):
             'quoteId': serializer.data['quoteId'],
             'tokenAmount': serializer.data['tokenAmount'],
             'approveAddress': serializer.data['approveAddress'],
-            'chainId': serializer.data['payment']['payment_method']['chain_id'],
+            'chainId': serializer.data['payment']['paymentMethod']['chainId'],
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)

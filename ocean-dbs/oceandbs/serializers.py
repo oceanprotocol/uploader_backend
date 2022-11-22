@@ -13,23 +13,23 @@ class TokensSerializer(serializers.ModelSerializer):
     fields=[]
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
-  accepted_tokens = TokensSerializer(many=True, read_only=True)
+  acceptedTokens = TokensSerializer(many=True, read_only=True)
   class Meta:
     model = PaymentMethod
-    fields=['chain_id', 'accepted_tokens']
+    fields=['chainId', 'acceptedTokens']
 
 class StorageSerializer(serializers.ModelSerializer):
-  payment_methods = PaymentMethodSerializer(many=True, read_only=True)
+  paymentMethods = PaymentMethodSerializer(many=True, read_only=True)
   class Meta:
     model = Storage
-    fields = ['type', 'description', 'payment_methods']
+    fields = ['type', 'description', 'paymentMethods']
 
 class PaymentSerializer(serializers.ModelSerializer):
-  payment_method = PaymentMethodSerializer()
+  paymentMethod = PaymentMethodSerializer()
 
   class Meta:
     model = Payment
-    fields = ['payment_method', 'wallet_address']
+    fields = ['paymentMethod', 'wallet_address']
 
   def create(self, validated_data):
     payment_method_data = validated_data.pop('payment')
@@ -58,10 +58,10 @@ class QuoteSerializer(serializers.ModelSerializer):
     quote = Quote.objects.create(**validated_data)
 
     # For payment method, check if it exits already. If so, associate it with the payment object instead of
-    payment_method = payment_data['payment_method']
+    payment_method = payment_data['paymentMethod']
     method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
 
-    payment_data['payment_method'] = method
+    payment_data['paymentMethod'] = method
     Payment.objects.create(quote=quote, **payment_data)
 
     # Manage files save
