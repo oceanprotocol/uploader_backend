@@ -100,14 +100,14 @@ class QuoteStatus(APIView):
       )
 
       if (response.status_code == 200):
-        quote.upload_status = json.loads(response.content)['status']
+        quote.status = json.loads(response.content)['status']
         quote.save()
 
     except Quote.DoesNotExist:
       return HttpResponse(status=404)
 
     return Response({
-      'status': quote.upload_status
+      'status': quote.status
     })
 
 
@@ -151,7 +151,7 @@ class UploadFile(APIView):
       )
 
       #TODO: Arrange upload codes
-      quote.upload_status = UPLOAD_CODE[2]
+      quote.status = UPLOAD_CODE[2]
       quote.save()
 
       if (response.status_code == 200):

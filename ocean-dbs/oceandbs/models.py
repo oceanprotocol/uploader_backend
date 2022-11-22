@@ -11,9 +11,13 @@ PAYMENT_STATUS = [
 ]
 
 UPLOAD_CODE = [
-  ('200', 'Quote exists'),
-  ('201', 'Quote created'),
-  ('202', 'Files uploaded'),
+  ('0', 'No such quote'),
+  ('1', 'Waiting for files to be uploaded'),
+  ('100', 'Processing payment'),
+  ('200', 'Processing payment failure modes'),
+  ('300', 'Uploading file to storage'),
+  ('400', 'Upload done'),
+  ('401', 'Upload failure modes'),
 ]
 
 # Create your models here.
@@ -61,7 +65,7 @@ class Quote(models.Model):
   tokenAddress = models.CharField(max_length=256, null = True)
   approveAddress = models.CharField(max_length=256, null = True)
   tokenAmount = models.BigIntegerField(null = True)
-  upload_status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
+  status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
 
   def __str__(self):
     return str(self.storage) + " - " + self.tokenAddress
