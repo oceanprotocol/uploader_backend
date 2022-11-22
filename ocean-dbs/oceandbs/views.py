@@ -23,14 +23,6 @@ class StorageList(APIView):
     serializer = StorageSerializer(storages, many=True)
     return Response(serializer.data, status=200)
 
-def get(self, request, format=None):
-    """
-    List all available storages
-    """
-    storages = Storage.objects.all()
-    serializer = StorageSerializer(storages, many=True)
-    return Response(serializer.data, status=200)
-
 
 # Quote creation endpoint
 class QuoteList(APIView):
@@ -108,7 +100,6 @@ class UploadFile(APIView):
   @csrf_exempt
   def post(self, request, format="multipart"):
     params = {**request.GET}
-    print(params)
 
     if not all(key in params for key in ('quoteId', 'nonce', 'signature')):
       return Response("Missing query parameters.", status=400)  
@@ -117,7 +108,6 @@ class UploadFile(APIView):
       return Response("No file sent alongside the request.", status=400)
 
     if request.FILES:
-      print(params['quoteId'])
       quote = Quote.objects.get(quoteId= params['quoteId'][0])
       if not quote:
         return Response("No quote associated with the request found.", status=400)
@@ -129,9 +119,8 @@ class UploadFile(APIView):
       #- Upload status to see if files have not been already uploaded
       for file in request.FILES:
         #TODO: Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
-        print(file)
         file_saved = File.objects.create(quote=quote, file=file)
-        print("File after save", file_saved, file_saved.quote)
+        # print("File after save", file_saved, file_saved.quote)
 
       quote.upload_status = UPLOAD_CODE[2]
       quote.save()

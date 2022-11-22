@@ -45,6 +45,4 @@ class TestFileUploadEndpoint(APITestCase):
 
     quote = Quote.objects.first()
     files = DBSFile.objects.filter(quote=quote)
-    print("Given quote", quote, quote.quoteId)
-    print(files)
     self.assertEqual(len(files), 2)
