@@ -61,10 +61,6 @@ class QuoteList(APIView):
     if not storage:
       return Response('Chosen storage type does not exist', status=400)
 
-    # From files, retrieve individual file size
-
-
-
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
     if (storage.type == 'filecoin'):
       response = requests.post(
@@ -81,7 +77,6 @@ class QuoteList(APIView):
     if response and response.status_code == 200:
       # Save the quote and cost/payment request
       data = {**data, **json.loads(response.content)}
-
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk

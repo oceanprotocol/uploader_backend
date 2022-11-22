@@ -70,12 +70,10 @@ class Quote(models.Model):
 
 
 class File(models.Model):
-    original_url = models.CharField(max_length=255)
+    original_url = models.CharField(max_length=255, null=True)
     content_type = models.CharField(max_length=255, default='None')
-    stored_url = models.CharField(max_length=255, blank=True)
+    stored_url = models.CharField(max_length=255, blank=True, null=True)
     object_content = models.BinaryField(blank=True)
     is_bytes = models.BooleanField(default=False)
     quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
-    
-    def __str__(self):
-        return self.original_url
+    length = models.BigIntegerField(default=0)

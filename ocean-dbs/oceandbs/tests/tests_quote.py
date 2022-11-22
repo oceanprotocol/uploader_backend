@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 from rest_framework.utils import json
 import responses
+from oceandbs.models import File, Quote, Payment, PaymentMethod
 
 # Using the standard RequestFactory API to create a form POST request
 class TestGetQuoteEndpoint(APITestCase):
@@ -21,7 +22,8 @@ class TestGetQuoteEndpoint(APITestCase):
     self.assertEqual(len(response.data), 1)
     
     # Assert content of the response itself, pure JSON
-    # self.assertEqual(response.data['content'], '')
+    self.assertEqual(response.data[0]['type'], 'filecoin')
+    self.assertEqual(response.data[0]['description'], 'filecoin')
   
   @responses.activate
   def test_quote_creation(self):
@@ -68,3 +70,6 @@ class TestGetQuoteEndpoint(APITestCase):
     self.assertIsNotNone(response.data['chainId'])
     self.assertIsNotNone(response.data['tokenAddress'])
     self.assertIsNotNone(response.data['quoteId'])
+
+    self.assertEqual(len(File.objects.all()), 2)
+    self.assertEqual(len(Quote.objects.all()), 2)

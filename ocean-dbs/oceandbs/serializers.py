@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import AcceptedToken, Quote, Storage, PaymentMethod, Payment, PAYMENT_STATUS, UPLOAD_CODE
+from .models import File, AcceptedToken, Quote, Storage, PaymentMethod, Payment, PAYMENT_STATUS, UPLOAD_CODE
+from django.utils.encoding import force_str
 
 class TokensSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
@@ -37,24 +38,34 @@ class PaymentSerializer(serializers.ModelSerializer):
         PaymentMethod.objects.create(payment=payment, **method)
     return payment
 
+
+class FileSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = File
+    fields = ['length']
+
+
 class QuoteSerializer(serializers.ModelSerializer):
   payment = PaymentSerializer()
+  files = FileSerializer(many=True)
   class Meta:
     model = Quote
-    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'payment', 'tokenAddress', 'approveAddress', 'upload_status']
+    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'payment', 'tokenAddress', 'approveAddress', 'upload_status', 'files']
 
   def create(self, validated_data):
     payment_data = validated_data.pop('payment')
+    files_data = validated_data.pop('files')
     quote = Quote.objects.create(**validated_data)
 
     # For payment method, check if it exits already. If so, associate it with the payment object instead of
     payment_method = payment_data['payment_method']
     method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
-    
+
     payment_data['payment_method'] = method
     Payment.objects.create(quote=quote, **payment_data)
 
-    #TODO: manage files save
-    
+    # Manage files save
+    for file in files_data:
+      File.objects.create(quote=quote, **file)
 
     return quote
