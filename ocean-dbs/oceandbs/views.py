@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.encoding import force_str
 import requests
 import json
+import random
 
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
@@ -117,12 +118,29 @@ class UploadFile(APIView):
       #- signature
       #- if duration of the quote since it has been created is still ok
       #- Upload status to see if files have not been already uploaded
+      files = []
       for file in request.FILES:
         #TODO: Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
-        file_saved = File.objects.create(quote=quote, file=file)
+        File.objects.create(quote=quote, file=file)
+        files.append('superipfshashyouknow' + str(random.randint(0,1523)))
         # print("File after save", file_saved, file_saved.quote)
 
+      # Upload files to micro-service
+      response = requests.post(
+        'https://filecoin.org/upload/',
+        {
+          "quoteId": quote.quoteId,
+          "nonce": params['nonce'][0],
+          "signature": params['signature'][0],
+          "files": files
+        }
+      )
+
+      #TODO: Arrange upload codes
       quote.upload_status = UPLOAD_CODE[2]
       quote.save()
 
-    return Response("Everything's fine", status=200)
+      if (response.status_code == 200):
+        return Response("File upload succeeded", status=200)
+
+    return Response("Looks like something failed", status=400)
