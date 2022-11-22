@@ -80,23 +80,22 @@ class QuoteList(APIView):
     # From the response data:
     if response and response.status_code == 200:
       # Save the quote and cost/payment request
-      # print(response.content)
-      # dict(response.content)
-      # data = data | response.content
       data = {**data, **json.loads(response.content)}
-      # print('data after service call', data)
-
-      # For payment method, check if it exits already. If so, associate it with the payment object instead of
 
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
-      data['wallet_address'] = data['tokenAddress']
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
           serializer.save()
-          return Response(serializer.data, status=201)
+          return Response({
+            'quoteId': serializer.data['quoteId'],
+            'tokenAmount': serializer.data['tokenAmount'],
+            'approveAddress': serializer.data['approveAddress'],
+            'chainId': serializer.data['payment']['payment_method']['chain_id'],
+            'tokenAddress': serializer.data['tokenAddress']
+          }, status=201)
       return Response(serializer.errors, status=400)
     else: return Response('Storage service response badly formatted', status=400)
 

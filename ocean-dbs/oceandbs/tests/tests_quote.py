@@ -59,14 +59,12 @@ class TestGetQuoteEndpoint(APITestCase):
       content_type='application/json'
     )
 
-    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.status_code, 201)
     self.assertNotEqual(response.status_code, 400)
 
-    # print(response.data)
-
     self.assertEqual(len(response.data), 5)
-    self.assertExists(response.data['tokenAmount'])
-    self.assertExists(response.data['approveAddress'])
-    self.assertExists(response.data['chainId'])
-    self.assertExists(response.data['tokenAddress'])
-    self.assertExists(response.data['quoteId'])
+    self.assertIsNotNone(response.data['tokenAmount'])
+    self.assertIsNotNone(response.data['approveAddress'])
+    self.assertIsNotNone(response.data['chainId'])
+    self.assertIsNotNone(response.data['tokenAddress'])
+    self.assertIsNotNone(response.data['quoteId'])

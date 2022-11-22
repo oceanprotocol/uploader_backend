@@ -41,18 +41,20 @@ class QuoteSerializer(serializers.ModelSerializer):
   payment = PaymentSerializer()
   class Meta:
     model = Quote
-    fields = ['id', 'storage', 'duration', 'payment', 'wallet_address', 'upload_status']
+    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'payment', 'tokenAddress', 'approveAddress', 'upload_status']
 
   def create(self, validated_data):
-
-    # print(validated_data)
- 
     payment_data = validated_data.pop('payment')
     quote = Quote.objects.create(**validated_data)
+
+    # For payment method, check if it exits already. If so, associate it with the payment object instead of
     payment_method = payment_data['payment_method']
     method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
+    
     payment_data['payment_method'] = method
     Payment.objects.create(quote=quote, **payment_data)
-    
-    return quote
 
+    #TODO: manage files save
+    
+
+    return quote

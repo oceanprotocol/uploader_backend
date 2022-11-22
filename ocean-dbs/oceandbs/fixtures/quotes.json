@@ -6,7 +6,8 @@
       "storage": 1,
       "duration": 2380293823,
       "payment": null,
-      "wallet_address": "0x456",
+      "tokenAddress": "0xOCEAN_on_MAINNET",
+      "approveAddress": "0x123",
       "upload_status": null
     }
   }
