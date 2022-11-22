@@ -30,7 +30,6 @@ class StorageList(APIView):
 
 # Quote creation endpoint
 class QuoteList(APIView):
-
   @csrf_exempt
   @extend_schema(
     # extra parameters added to the schema
@@ -140,6 +139,31 @@ class QuoteStatus(APIView):
       'status': quote.status
     })
 
+class QuoteLink(APIView):
+  @csrf_exempt
+  def get(self, request, quoteId):
+    """
+    Retrieve a quote status from the associated micro-service
+    """
+    try:
+      quote = Quote.objects.get(quoteId=quoteId)
+      params = {**request.GET}
+
+      if not all(key in params for key in ('nonce', 'signature')):
+        return Response("Missing query parameters.", status=400)  
+
+      # Request status of quote from micro-service
+      response = requests.get(
+        quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
+      )
+
+    except Quote.DoesNotExist:
+      return HttpResponse(status=404)
+
+    return Response({
+      "type": quote.storage.type,
+      "CID": json.loads(response.content)[0]['CID']
+    })
 
 class UploadFile(APIView):
   @csrf_exempt
@@ -147,7 +171,7 @@ class UploadFile(APIView):
     params = {**request.GET}
 
     if not all(key in params for key in ('quoteId', 'nonce', 'signature')):
-      return Response("Missing query parameters.", status=400)  
+      return Response("Missing query parameters.", status=400)
 
     if not request.FILES and not request.FILES['file']:
       return Response("No file sent alongside the request.", status=400)
