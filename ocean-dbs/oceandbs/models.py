@@ -2,6 +2,7 @@ from tabnanny import verbose
 from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 PAYMENT_STATUS = [
   ['waiting', _('Waiting for transaction')],
@@ -16,7 +17,7 @@ UPLOAD_CODE = [
 
 # Create your models here.
 class Storage(models.Model):
-  created = models.DateTimeField(auto_now_add=True)
+  created = models.DateTimeField(default=timezone.now)
   type = models.CharField(max_length=256, verbose_name=_("Storage type"))
   description= models.TextField(verbose_name = _("Storage description"), null=True, blank=True)
   url = models.URLField(max_length=2048, default="https://example.com")
@@ -32,7 +33,7 @@ class PaymentMethod(models.Model):
   storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="payment_methods")
 
   def __str__(self):
-    return self.chain_id + " - " + self.storage.type
+    return self.chain_id + " - " + str(self.storage)
 
 
 class AcceptedToken(models.Model):
@@ -51,19 +52,21 @@ class Payment(models.Model):
 
 
 class Quote(models.Model):
-  created = models.DateTimeField(auto_now_add=True)
+  created = models.DateTimeField(default=timezone.now)
+  quoteId = models.CharField(max_length=256, null = True)
   storage = models.ForeignKey(Storage, null = True, on_delete=models.SET_NULL, related_name ="quotes")
   duration = models.BigIntegerField()
   payment = models.OneToOneField(Payment, null=True, blank=True, related_name = "quote", on_delete=models.CASCADE)
-  wallet_address = models.CharField(max_length=256, null = True)
+  tokenAddress = models.CharField(max_length=256, null = True)
+  approveAddress = models.CharField(max_length=256, null = True)
+  tokenAmount = models.BigIntegerField(null = True)
   upload_status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
-  # class Meta:
+
   def __str__(self):
-    return str(self.storage) + " - " + self.wallet_address
+    return str(self.storage) + " - " + self.tokenAddress
 
   class Meta:
     ordering = ['created']
-
 
 
 class File(models.Model):

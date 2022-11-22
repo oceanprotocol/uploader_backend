@@ -160,3 +160,9 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '0.0.1',
     'SERVE_INCLUDE_SCHEMA': False
 }
+
+#########################
+# DBS SPECIFIC SETTINGS #
+###################"#####
+FILECOIN_SERVICE_URL = 'https://storage.filecoin.com'
+ARWEAVE_SERVICE_URL = 'https://storage.arweave.com'

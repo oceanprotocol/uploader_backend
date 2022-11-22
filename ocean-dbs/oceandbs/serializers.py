@@ -44,29 +44,15 @@ class QuoteSerializer(serializers.ModelSerializer):
     fields = ['id', 'storage', 'duration', 'payment', 'wallet_address', 'upload_status']
 
   def create(self, validated_data):
-    #TODO: make sure validated data or data contains type and files
-    #TODO: from type, retrieve associated storage object
-    # If not exists, raise error
-    
-    # From files, retrieve individual file size
-    
-    # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
-    # Save the cost/payment request
-    
-    # For payment method, check if it exits already. If so, associate it with the payment object instead of
-    # creating the new payment with status still to execute
-    print(validated_data)
-    storage = Storage.objects.get(type=validated_data.pop('type'))
-    print(storage)
+
+    # print(validated_data)
+ 
     payment_data = validated_data.pop('payment')
-    quote = Quote.objects.create(storage=storage, **validated_data)
+    quote = Quote.objects.create(**validated_data)
     payment_method = payment_data['payment_method']
-    method = PaymentMethod.objects.create(**payment_method)
+    method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
     payment_data['payment_method'] = method
     Payment.objects.create(quote=quote, **payment_data)
     
-    print(PaymentMethod.objects.all())
-    print(Payment.objects.all())
-    print(Quote.objects.all())
     return quote
 

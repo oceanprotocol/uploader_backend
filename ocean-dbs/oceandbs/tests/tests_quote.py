@@ -1,7 +1,7 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 from rest_framework.utils import json
+import responses
 
 # Using the standard RequestFactory API to create a form POST request
 class TestGetQuoteEndpoint(APITestCase):
@@ -22,7 +22,8 @@ class TestGetQuoteEndpoint(APITestCase):
     
     # Assert content of the response itself, pure JSON
     # self.assertEqual(response.data['content'], '')
-
+  
+  @responses.activate
   def test_quote_creation(self):
     body = {
       "type": "filecoin",
@@ -40,11 +41,32 @@ class TestGetQuoteEndpoint(APITestCase):
       "userAddress": "0x456"
     }
 
-    response = self.client.post('/quotes/', data=json.dumps(body), content_type='application/json')
-    print(response.data)
-    # self.assertEqual(response.status_code, 200)
-    # self.assertNotEqual(response.status_code, 400)
-    self.assertEqual(len(response.data), 1)
-    print(response.data)
-    self.assertExists(response.data[0]['payment'])
-    self.assertNotExists(response.data[0]['payment'][0])
+    responses.post(
+        url=settings.FILECOIN_SERVICE_URL + '/getQuote/',
+        json={
+        'tokenAmount': 500,
+        'approveAddress': '0x123',
+        'chainId': 1,
+        'tokenAddress': '0xOCEAN_on_MAINNET',
+        'quoteId': 'xxxx'
+      },
+      status=200
+    )
+
+    response = self.client.post(
+      '/quotes/',
+      data=json.dumps(body),
+      content_type='application/json'
+    )
+
+    self.assertEqual(response.status_code, 200)
+    self.assertNotEqual(response.status_code, 400)
+
+    # print(response.data)
+
+    self.assertEqual(len(response.data), 5)
+    self.assertExists(response.data['tokenAmount'])
+    self.assertExists(response.data['approveAddress'])
+    self.assertExists(response.data['chainId'])
+    self.assertExists(response.data['tokenAddress'])
+    self.assertExists(response.data['quoteId'])
