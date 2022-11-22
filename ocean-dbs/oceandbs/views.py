@@ -5,11 +5,12 @@ from django.utils.encoding import force_str
 import requests
 import json
 import random
-
+from rest_framework import serializers
+from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample, inline_serializer
 from drf_spectacular.types import OpenApiTypes
 
 from .serializers import StorageSerializer, QuoteSerializer
@@ -29,16 +30,45 @@ class StorageList(APIView):
 
 # Quote creation endpoint
 class QuoteList(APIView):
-  @csrf_exempt
-  def get(self, request, format=None):
-    """
-    GET the quote list, handle different error code
-    """
-    quotes = Quote.objects.all()
-    serializer = QuoteSerializer(quotes, many=True)
-    return Response(serializer.data, status=200)
 
   @csrf_exempt
+  @extend_schema(
+    # extra parameters added to the schema
+    parameters=[],
+    examples=[
+      OpenApiExample(
+        'Request body example',
+        value={
+          "type": "filecoin",
+          "files": [
+            {"length":2343545},
+            {"length":2343545}
+          ],
+          "duration": 4353545453,
+          "payment": {
+              "payment_method": {
+                "chainId": 1,
+              },
+              "wallet_address": "0xOCEAN_on_MAINNET"
+          },
+          "userAddress": "0x456"
+        }
+      )
+    ],
+    responses={
+       200: inline_serializer(
+          name='Response body example',
+          fields={
+            'tokenAmount': serializers.IntegerField(),
+            'approveAddress': serializers.CharField(),
+            'chainId': serializers.IntegerField(),
+            'tokenAddress': serializers.CharField(),
+            'tokenAddress': serializers.CharField(),
+          },
+       ), 
+       400: OpenApiResponse(description='Missing callsign'),
+    }
+  )
   def post(self, request, format=None):
     """
     POST a quote, handle different error code
