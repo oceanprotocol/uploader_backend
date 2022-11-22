@@ -22,8 +22,9 @@ class TestGetQuoteEndpoint(APITestCase):
     self.assertEqual(len(response.data), 1)
 
     # Assert content of the response itself, pure JSON
-    # self.assertEqual(response.data[0]['type'], 'filecoin')
-    # self.assertEqual(response.data[0]['description'], 'filecoin')
+    self.assertEqual(response.data[0]['duration'], 2380293823)
+    self.assertEqual(response.data[0]['tokenAddress'], '0xOCEAN_on_MAINNET')
+    self.assertEqual(response.data[0]['approveAddress'], '0x123')
 
   @responses.activate
   def test_quote_creation(self):
