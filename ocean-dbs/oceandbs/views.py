@@ -15,8 +15,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 from .serializers import StorageSerializer, QuoteSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
 
-# Info endpoint listing all available storages
 class StorageList(APIView):
+  # Info endpoint listing all available storages
   @csrf_exempt
   def get(self, request, format=None):
     """
@@ -25,6 +25,42 @@ class StorageList(APIView):
     storages = Storage.objects.all()
     serializer = StorageSerializer(storages, many=True)
     return Response(serializer.data, status=200)
+
+  # Storage creation endpoint
+  @csrf_exempt
+  def post(self, request):
+    """
+    POST a quote, handle different error code
+    """
+    data = JSONParser().parse(request)
+
+    # Make sure request data contains type and files
+    if (not 'type' in data):
+      return Response("Invalid input data.", status=400)
+
+    # Check if storage object with given type already exists
+    # From type, retrieve associated storage object
+    try:
+      storage = Storage.objects.get(type=data['type'])
+      if storage:
+        return Response('Chosen storage type already exists.', status=400)
+    except:
+      for payment_method in data['paymentMethods']:
+        transit_table = []
+        for token in payment_method['acceptedTokens']:
+          accepted_token={}
+          accepted_token['title'] = list(token.keys())[0]
+          accepted_token['value'] = list(token.values())[0]
+          transit_table.append(accepted_token)
+        
+        payment_method['acceptedTokens'] = transit_table
+
+      serializer = StorageSerializer(data=data)
+      if serializer.is_valid():
+          storage = serializer.save()
+          return Response('Desired storage created.', status=201)
+
+      return Response('Input data is invalid.', status=400)
 
 
 # Quote creation endpoint
@@ -67,7 +103,7 @@ class QuoteList(APIView):
        400: OpenApiResponse(description='Missing callsign'),
     }
   )
-  def post(self, request, format=None):
+  def post(self, request):
     """
     POST a quote, handle different error code
     """
@@ -96,8 +132,9 @@ class QuoteList(APIView):
       data = {**data, **json.loads(response.content)}
 
       # Creating the new payment with status still to execute
+      payment_method = data['payment'].pop('payment_method')
       data['storage'] = storage.pk
-      data['payment']['paymentMethod'] = data['payment'].pop('payment_method')
+      data['payment']['paymentMethod'] = payment_method
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
@@ -106,7 +143,7 @@ class QuoteList(APIView):
             'quoteId': serializer.data['quoteId'],
             'tokenAmount': serializer.data['tokenAmount'],
             'approveAddress': serializer.data['approveAddress'],
-            'chainId': serializer.data['payment']['paymentMethod']['chainId'],
+            'chainId': payment_method['chainId'],
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)

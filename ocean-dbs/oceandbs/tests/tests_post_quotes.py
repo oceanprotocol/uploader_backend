@@ -5,7 +5,7 @@ import responses
 from oceandbs.models import File, Quote, Payment, PaymentMethod
 
 # Using the standard RequestFactory API to create a form POST request
-class TestGetQuoteEndpoint(APITestCase):
+class TestCreateQuoteEndpoint(APITestCase):
   fixtures = ['storages.json']
 
   def setUp(self):
