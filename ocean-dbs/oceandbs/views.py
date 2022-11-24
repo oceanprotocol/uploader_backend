@@ -15,7 +15,6 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 from .serializers import StorageSerializer, QuoteSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
 
-
 # Info endpoint listing all available storages
 class StorageList(APIView):
   @csrf_exempt
@@ -123,7 +122,6 @@ class QuoteStatus(APIView):
     try:
       quote = Quote.objects.get(quoteId=quoteId)
 
-
       # Request status of quote from micro-service
       response = requests.get(
         quote.storage.url + 'quote/' + str(quoteId)
@@ -162,32 +160,6 @@ def check_params_validity(params, quote):
 
   return True
 
-
-class QuoteLink(APIView):
-  @csrf_exempt
-  def get(self, request, quoteId):
-    params = {**request.GET}
-    quote = Quote.objects.get(quoteId=quoteId)
-    if not quote:
-      return Response("No quote associated with the request found.", status=400)
-
-    is_valid = check_params_validity(params, quote)
-    if isinstance(is_valid, Response):
-      return is_valid
-
-    """
-    Retrieve a quote status from the associated micro-service
-    """
-    # Request status of quote from micro-service
-    response = requests.get(
-      quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
-    )
-
-    return Response({
-      "type": quote.storage.type,
-      "CID": json.loads(response.content)[0]['CID']
-    })
-
 class UploadFile(APIView):
   @csrf_exempt
   def post(self, request, quoteId, format="multipart"):
@@ -202,33 +174,74 @@ class UploadFile(APIView):
       return is_valid
 
     # Check existence of FILES in the request
-    if not request.FILES and not request.FILES['file']:
+    if not request.FILES:
       return Response("No file sent alongside the request.", status=400)
 
-    # Check upload status to see if files have not been already uploaded
-    files = []
-    for file in request.FILES:
-      #TODO: Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
-      File.objects.create(quote=quote, file=file)
-      files.append('superipfshashyouknow' + str(random.randint(0,1523)))
-      # print("File after save", file_saved, file_saved.quote)
+    #TODO: Check upload status to see if files have not been already uploaded
+
+    # Forward the files to IPFS, retrieve whatever the hash they provide us, mocked in the test
+    files_reference = []
+    url = "http://127.0.0.1:5001/api/v0/add"
+    response = requests.post(url, files=request.FILES)
+    files=response.text.splitlines()
+    for file in files:
+      added_file={}
+      json_version = json.loads(file)
+      added_file['title']=json_version['Name']
+      added_file['cid']=json_version['Hash']
+      added_file['public_url']=f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
+
+      # Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
+      File.objects.create(quote=quote, **added_file)
+      files_reference.append(added_file['cid'])
+
+    data = {
+      "quoteId": quote.quoteId,
+      "nonce": params['nonce'][0],
+      "signature": params['signature'][0],
+      "files": files_reference
+    }
 
     # Upload files to micro-service
     response = requests.post(
       quote.storage.url + 'upload/',
-      {
-        "quoteId": quote.quoteId,
-        "nonce": params['nonce'][0],
-        "signature": params['signature'][0],
-        "files": files
-      }
+      data
     )
 
-    #TODO: Arrange upload codes
-    quote.status = UPLOAD_CODE[2]
-    quote.save()
-
     if (response.status_code == 200):
+      #TODO: Arrange upload codes
+      quote.status = UPLOAD_CODE[4]
+      quote.save()
+
       return Response("File upload succeeded", status=200)
 
+    #TODO: Arrange upload codes
+    quote.status = UPLOAD_CODE[5]
+    quote.save()
+
     return Response("Looks like something failed", status=400)
+
+class QuoteLink(APIView):
+  @csrf_exempt
+  def get(self, request, quoteId):
+    params = {**request.GET}
+    quote = Quote.objects.get(quoteId=quoteId)
+    if not quote:
+      return Response("No quote associated with the request found.", status=400)
+
+    is_valid = check_params_validity(params, quote)
+    if isinstance(is_valid, Response):
+      return is_valid
+
+    """
+    Retrieve the quote documents links from the associated micro-service
+    """
+    # Request status of quote from micro-service
+    response = requests.get(
+      quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
+    )
+
+    return Response({
+      "type": quote.storage.type,
+      "CID": json.loads(response.content)[0]['CID']
+    })

@@ -59,7 +59,7 @@ def expiration_date():
     return timezone.now() + timezone.timedelta(minutes=30)
 
 def nonce_computation():
-    return timezone.now() - timezone.timedelta(minutes=30)
+    return timezone.now() - timezone.timedelta(days=7)
 
 class Quote(models.Model):
   created = models.DateTimeField(default=timezone.now)
@@ -80,12 +80,12 @@ class Quote(models.Model):
   class Meta:
     ordering = ['created']
 
-
 class File(models.Model):
-  public_url = models.CharField(max_length=255, null=True)
+  title = models.CharField(max_length=256, null=True)
+  public_url = models.CharField(max_length=2048, null=True)
+  cid = models.CharField(max_length=2048, null=True)
   quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
   length = models.BigIntegerField(default=0)
-  file = models.FileField(null=True, blank=True)
 
   def __str__(self):
     return str(self.quote) + " - " + str(self.length)
