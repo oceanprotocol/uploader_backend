@@ -10,11 +10,11 @@ class TestLinkEndpoint(APITestCase):
   def setUp(self):
     self.factory = APIRequestFactory()
     self.client = APIClient()
-  
+
   @responses.activate
   def test_get_link_endpoint(self):
     responses.get(
-      url= 'https://filecoin.org/quote/123565/link?nonce=1&signature=0xXXXXX',
+      url= 'https://filecoin.org/quote/123565/link?nonce=1669286323&signature=ffcdc15308e195bbf3d9eb9af1a6a4f37dc9aba72e620dbbd1dffa634e897d46',
       json=[
         {
           "type": "filecoin",
@@ -24,8 +24,9 @@ class TestLinkEndpoint(APITestCase):
       status=200
     )
 
-    response = self.client.get('/quote/123565/link?nonce=1&signature=0xXXXXX')
-    
+    # For arweave it would be a transaction ID so the tests should be different
+    response = self.client.get('/quote/123565/link?nonce=1669286323&signature=ffcdc15308e195bbf3d9eb9af1a6a4f37dc9aba72e620dbbd1dffa634e897d46')
+
     # Assert proper HTTP status code
     self.assertEqual(response.status_code, status.HTTP_200_OK)
     # Assert content of the response itself, pure JSON

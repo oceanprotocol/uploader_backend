@@ -38,7 +38,7 @@ class TestFileUploadEndpoint(APITestCase):
     )
 
     response = self.client.post(
-      '/upload/?quoteId=123565&nonce=1&signature=xxxxx',
+      '/quote/123565/upload?nonce=1669286323&signature=ffcdc15308e195bbf3d9eb9af1a6a4f37dc9aba72e620dbbd1dffa634e897d46',
       {'file1':image_mock, 'file2':image_mock},
       format="multipart"
     )

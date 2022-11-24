@@ -1,20 +1,19 @@
-from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.encoding import force_str
+from django.utils import timezone
 import requests
 import json
 import random
+import hashlib
 from rest_framework import serializers
-from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample, inline_serializer
-from drf_spectacular.types import OpenApiTypes
 
 from .serializers import StorageSerializer, QuoteSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
+
 
 # Info endpoint listing all available storages
 class StorageList(APIView):
@@ -123,6 +122,7 @@ class QuoteStatus(APIView):
     try:
       quote = Quote.objects.get(quoteId=quoteId)
 
+
       # Request status of quote from micro-service
       response = requests.get(
         quote.storage.url + 'quote/' + str(quoteId)
@@ -139,26 +139,48 @@ class QuoteStatus(APIView):
       'status': quote.status
     })
 
+def check_params_validity(params, quote):
+  if not all(key in params for key in ('nonce', 'signature')):
+    return Response("Missing query parameters.", status=400)
+
+  # Check expiration date of the quote vs current date
+  if quote.expiration < timezone.now():
+    return Response("Quote already expired, please create a new one.", status=400)
+
+  # Check nonce
+  if not str(round(quote.nonce.timestamp())) < params['nonce'][0]:
+    return Response("Nonce value invalid.", status=400)
+
+  # Check signature
+  sha256_hash = hashlib.sha256((str(quote.quoteId) + str(params['nonce'][0])).encode('utf-8')).hexdigest()
+  if not sha256_hash == params['signature'][0]:
+    return Response("Invalid signature.", status=400)
+
+  quote.nonce = params['nonce'][0]
+  quote.save()
+
+  return True
+
+
 class QuoteLink(APIView):
   @csrf_exempt
   def get(self, request, quoteId):
+    params = {**request.GET}
+    quote = Quote.objects.get(quoteId=quoteId)
+    if not quote:
+      return Response("No quote associated with the request found.", status=400)
+
+    is_valid = check_params_validity(params, quote)
+    if isinstance(is_valid, Response):
+      return is_valid
+
     """
     Retrieve a quote status from the associated micro-service
     """
-    try:
-      quote = Quote.objects.get(quoteId=quoteId)
-      params = {**request.GET}
-
-      if not all(key in params for key in ('nonce', 'signature')):
-        return Response("Missing query parameters.", status=400)  
-
-      # Request status of quote from micro-service
-      response = requests.get(
-        quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
-      )
-
-    except Quote.DoesNotExist:
-      return HttpResponse(status=404)
+    # Request status of quote from micro-service
+    response = requests.get(
+      quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
+    )
 
     return Response({
       "type": quote.storage.type,
@@ -167,48 +189,45 @@ class QuoteLink(APIView):
 
 class UploadFile(APIView):
   @csrf_exempt
-  def post(self, request, format="multipart"):
+  def post(self, request, quoteId, format="multipart"):
     params = {**request.GET}
 
-    if not all(key in params for key in ('quoteId', 'nonce', 'signature')):
-      return Response("Missing query parameters.", status=400)
+    quote = Quote.objects.get(quoteId=quoteId)
+    if not quote:
+      return Response("No quote associated with the request found.", status=400)
 
+    is_valid = check_params_validity(params, quote)
+    if isinstance(is_valid, Response):
+      return is_valid
+
+    # Check existence of FILES in the request
     if not request.FILES and not request.FILES['file']:
       return Response("No file sent alongside the request.", status=400)
 
-    if request.FILES:
-      quote = Quote.objects.get(quoteId= params['quoteId'][0])
-      if not quote:
-        return Response("No quote associated with the request found.", status=400)
+    # Check upload status to see if files have not been already uploaded
+    files = []
+    for file in request.FILES:
+      #TODO: Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
+      File.objects.create(quote=quote, file=file)
+      files.append('superipfshashyouknow' + str(random.randint(0,1523)))
+      # print("File after save", file_saved, file_saved.quote)
 
-      #TODO: Need to check:
-      #- nonce
-      #- signature
-      #- if duration of the quote since it has been created is still ok
-      #- Upload status to see if files have not been already uploaded
-      files = []
-      for file in request.FILES:
-        #TODO: Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
-        File.objects.create(quote=quote, file=file)
-        files.append('superipfshashyouknow' + str(random.randint(0,1523)))
-        # print("File after save", file_saved, file_saved.quote)
+    # Upload files to micro-service
+    response = requests.post(
+      quote.storage.url + 'upload/',
+      {
+        "quoteId": quote.quoteId,
+        "nonce": params['nonce'][0],
+        "signature": params['signature'][0],
+        "files": files
+      }
+    )
 
-      # Upload files to micro-service
-      response = requests.post(
-        quote.storage.url + 'upload/',
-        {
-          "quoteId": quote.quoteId,
-          "nonce": params['nonce'][0],
-          "signature": params['signature'][0],
-          "files": files
-        }
-      )
+    #TODO: Arrange upload codes
+    quote.status = UPLOAD_CODE[2]
+    quote.save()
 
-      #TODO: Arrange upload codes
-      quote.status = UPLOAD_CODE[2]
-      quote.save()
-
-      if (response.status_code == 200):
-        return Response("File upload succeeded", status=200)
+    if (response.status_code == 200):
+      return Response("File upload succeeded", status=200)
 
     return Response("Looks like something failed", status=400)

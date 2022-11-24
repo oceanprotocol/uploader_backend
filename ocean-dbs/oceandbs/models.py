@@ -55,6 +55,11 @@ class Payment(models.Model):
   wallet_address = models.CharField(max_length=256, null = True)
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="payments")
 
+def expiration_date():
+    return timezone.now() + timezone.timedelta(minutes=30)
+
+def nonce_computation():
+    return timezone.now() - timezone.timedelta(minutes=30)
 
 class Quote(models.Model):
   created = models.DateTimeField(default=timezone.now)
@@ -66,6 +71,8 @@ class Quote(models.Model):
   approveAddress = models.CharField(max_length=256, null = True)
   tokenAmount = models.BigIntegerField(null = True)
   status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
+  nonce = models.DateTimeField(default=nonce_computation())
+  expiration = models.DateTimeField(default=expiration_date())
 
   def __str__(self):
     return str(self.storage) + " - " + self.tokenAddress
