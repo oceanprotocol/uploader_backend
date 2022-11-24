@@ -53,6 +53,10 @@ class TestFileUploadEndpoint(APITestCase):
     self.assertEqual(len(DBSFile.objects.all()), 2)
     self.assertEqual(len(Quote.objects.all()), 1)
 
+    file = DBSFile.objects.first()
+    self.assertIsNotNone(file.cid)
+    self.assertIsNotNone(file.public_url)
+
     quote = Quote.objects.first()
     files = DBSFile.objects.filter(quote=quote)
     self.assertEqual(len(files), 2)
