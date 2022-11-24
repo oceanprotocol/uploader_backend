@@ -5,6 +5,7 @@ import requests
 import json
 import random
 import hashlib
+from datetime import datetime
 from rest_framework import serializers
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
@@ -156,7 +157,7 @@ def check_params_validity(params, quote):
   if not sha256_hash == params['signature'][0]:
     return Response("Invalid signature.", status=400)
 
-  quote.nonce = params['nonce'][0]
+  quote.nonce = datetime.fromtimestamp(int(params['nonce'][0]), timezone.utc)
   quote.save()
 
   return True
