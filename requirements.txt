@@ -16,7 +16,7 @@ chardet==3.0.4
 click==7.1.1
 colorama==0.4.3
 confusable-homoglyphs==3.2.0
-cryptography==37.0.2
+cryptography==38.0.3
 cssselect2==0.6.0
 cupshelpers==1.0
 dbus-python==1.2.16
