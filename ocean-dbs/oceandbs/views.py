@@ -12,10 +12,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample, inline_serializer
 
-from .serializers import StorageSerializer, QuoteSerializer
+from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
 
+
 class StorageList(APIView):
+  write_serializer_class = CreateStorageSerializer
+  read_serializer_class = StorageSerializer
   # Info endpoint listing all available storages
   @csrf_exempt
   def get(self, request, format=None):
@@ -23,7 +26,7 @@ class StorageList(APIView):
     List all available storages
     """
     storages = Storage.objects.all()
-    serializer = StorageSerializer(storages, many=True)
+    serializer = self.read_serializer_class(storages, many=True)
     return Response(serializer.data, status=200)
 
   # Storage creation endpoint
@@ -55,7 +58,7 @@ class StorageList(APIView):
         
         payment_method['acceptedTokens'] = transit_table
 
-      serializer = StorageSerializer(data=data)
+      serializer = self.write_serializer_class(data=data)
       if serializer.is_valid():
           storage = serializer.save()
           return Response('Desired storage created.', status=201)
@@ -132,9 +135,8 @@ class QuoteList(APIView):
       data = {**data, **json.loads(response.content)}
 
       # Creating the new payment with status still to execute
-      payment_method = data['payment'].pop('payment_method')
       data['storage'] = storage.pk
-      data['payment']['paymentMethod'] = payment_method
+      data['payment']['paymentMethod'] = data['payment'].pop('payment_method')
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
@@ -143,7 +145,7 @@ class QuoteList(APIView):
             'quoteId': serializer.data['quoteId'],
             'tokenAmount': serializer.data['tokenAmount'],
             'approveAddress': serializer.data['approveAddress'],
-            'chainId': payment_method['chainId'],
+            'chainId': data['payment']['paymentMethod']['chainId'],
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)
