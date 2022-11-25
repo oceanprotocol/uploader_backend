@@ -2,28 +2,27 @@ from django.contrib import admin
 
 from .models import AcceptedToken, Storage, Quote, PaymentMethod, Payment, File
 
-class AcceptedTokenAdmin(admin.ModelAdmin):
-    fields = ['title', 'value', 'payment_method']
+class CustomModelAdmin(admin.ModelAdmin):    
+    def __init__(self, model, admin_site):
+        self.list_display = [field.name for field in model._meta.fields if field.name != "id"]
+        super(CustomModelAdmin, self).__init__(model, admin_site)
+
+class AcceptedTokenAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
-class PaymentMethodAdmin(admin.ModelAdmin):
-    fields = ['chainId', 'storage']
+class PaymentMethodAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
-class StorageAdmin(admin.ModelAdmin):
-    fields = ['type', 'description']
+class StorageAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
-class PaymentAdmin(admin.ModelAdmin):
-    fields = ['wallet_address', 'payment_method']
+class PaymentAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
-class QuoteAdmin(admin.ModelAdmin):
-    fields = ['storage', 'duration', 'payment', 'wallet_address', 'status']
+class QuoteAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
-class FileAdmin(admin.ModelAdmin):
-    fields = ['original_url', 'content_type', 'stored_url', 'object_content', 'is_bytes', 'quote']
+class FileAdmin(CustomModelAdmin):
     readonly_fields = ('id',)
 
 admin.site.register(AcceptedToken, AcceptedTokenAdmin)
