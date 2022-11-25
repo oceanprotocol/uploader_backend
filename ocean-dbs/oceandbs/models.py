@@ -35,7 +35,7 @@ class Storage(models.Model):
 
 class PaymentMethod(models.Model):
   chainId = models.CharField(max_length=256)
-  storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="paymentMethods")
+  storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="paymentMethods")
 
   def __str__(self):
     return self.chainId + " - " + str(self.storage)
@@ -44,7 +44,7 @@ class PaymentMethod(models.Model):
 class AcceptedToken(models.Model):
   title = models.CharField(max_length=256)
   value = models.CharField(max_length=256)
-  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="acceptedTokens")
+  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="acceptedTokens")
 
   def __str__(self):
     return str(self.paymentMethod) + " - " + self.title + " - " + self.value
@@ -53,7 +53,7 @@ class AcceptedToken(models.Model):
 class Payment(models.Model):
   status = models.CharField(choices = PAYMENT_STATUS, default=PAYMENT_STATUS[0], max_length = 256)
   wallet_address = models.CharField(max_length=256, null = True)
-  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.SET_NULL, related_name="payments")
+  paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="payments")
 
 def expiration_date():
     return timezone.now() + timezone.timedelta(minutes=30)
