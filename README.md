@@ -39,4 +39,4 @@ The first version has been implemented following the TDD strategy, so please fir
 Thanks to the $OCEAN community for the funding and the $OCEAN core team for the technical support and insights.
 
 ## License
-This project is delivered under a MIT License
+This project is delivered under an Apache License
