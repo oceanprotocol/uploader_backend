@@ -40,3 +40,7 @@ Thanks to the $OCEAN community for the funding and the $OCEAN core team for the 
 
 ## License
 This project is delivered under an Apache License
+
+## Additional projects
+ - DBS Arweave microservice (https://github.com/oceanprotocol/dbs_filecoin)
+ - DBS Filecoin microservice (https://github.com/oceanprotocol/dbs_arweave)
