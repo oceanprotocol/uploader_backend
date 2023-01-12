@@ -52,7 +52,7 @@ class StorageSerializer(serializers.ModelSerializer):
   paymentMethods = PaymentMethodSerializer(many=True)
   class Meta:
     model = Storage
-    fields = ['type', 'description', 'url', 'paymentMethods']
+    fields = ['type', 'description', 'paymentMethods']
 
 
 class PaymentSerializer(serializers.ModelSerializer):

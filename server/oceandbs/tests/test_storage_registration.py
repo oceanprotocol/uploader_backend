@@ -45,7 +45,7 @@ class TestStorageRegistrationEndpoint(APITestCase):
 
     # The actual request to create a new storage service
     response = self.client.post(  
-      '/storages/', 
+      '/register', 
       data=json.dumps(body),
       content_type='application/json'
     )

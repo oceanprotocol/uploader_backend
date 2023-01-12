@@ -43,7 +43,7 @@ class TestCreateQuoteEndpoint(APITestCase):
     )
 
     response = self.client.post(
-      '/quotes/',
+      '/getQuote',
       data=json.dumps(body),
       content_type='application/json'
     )
@@ -79,7 +79,7 @@ class TestCreateQuoteEndpoint(APITestCase):
     }
 
     response = self.client.post(
-      '/quotes/',
+      '/getQuote',
       data=json.dumps(body),
       content_type='application/json'
     )
@@ -106,7 +106,7 @@ class TestCreateQuoteEndpoint(APITestCase):
     }
 
     response = self.client.post(
-      '/quotes/',
+      '/getQuote',
       data=json.dumps(body),
       content_type='application/json'
     )

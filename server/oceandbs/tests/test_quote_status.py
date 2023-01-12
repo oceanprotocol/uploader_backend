@@ -10,7 +10,7 @@ class TestQuoteStatusEndpoint(APITestCase):
   def setUp(self):
     self.factory = APIRequestFactory()
     self.client = APIClient()
-  
+
   @responses.activate
   def test_quote_status_endpoint(self):
     responses.get(
@@ -21,7 +21,7 @@ class TestQuoteStatusEndpoint(APITestCase):
       status=200
     )
 
-    response = self.client.get('/quote/123565/')
+    response = self.client.get('/getStatus?quoteId=123565')
     # Assert proper HTTP status code
     self.assertEqual(response.status_code, status.HTTP_200_OK)
     # Assert content of the response itself, pure JSON

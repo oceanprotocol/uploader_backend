@@ -2,9 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('storages/', views.StorageList.as_view(), name="info"),
-    path('quote/<int:quoteId>/', views.QuoteStatus.as_view(), name="status"),
-    path('quote/<int:quoteId>/link', views.QuoteLink.as_view(), name="link"),
-    path('quotes/', views.QuoteList.as_view()),
-    path('quote/<int:quoteId>/upload', views.UploadFile.as_view())
+    path('', views.StorageListView.as_view(), name="info"),
+    path('register', views.StorageCreationView.as_view(), name="service-creation"),
+    path('getStatus', views.QuoteStatusView.as_view(), name="status"),
+    path('getLink', views.QuoteLink.as_view(), name="link"),
+    path('getQuote', views.QuoteCreationView.as_view()),
+    path('upload', views.UploadFile.as_view())
 ]

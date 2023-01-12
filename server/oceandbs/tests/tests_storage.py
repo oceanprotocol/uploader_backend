@@ -11,7 +11,7 @@ class TestInfoEndpoint(APITestCase):
     self.client = APIClient()
 
   def test_get_info_endpoint(self):
-    response = self.client.get('/storages/')
+    response = self.client.get('/')
     # Assert proper HTTP status code
     self.assertEqual(response.status_code, status.HTTP_200_OK)
     # Assert content of the response itself, pure JSON
@@ -19,3 +19,6 @@ class TestInfoEndpoint(APITestCase):
 
     self.assertEqual(response.data[0]['type'], 'filecoin')
     self.assertEqual(response.data[0]['description'], 'The file coin storage description.')
+
+    if('url' in response.data[0]):
+      self.assertIsNone(response.data[0]['url'])

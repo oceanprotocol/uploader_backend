@@ -24,7 +24,7 @@ class TestFileUploadEndpoint(APITestCase):
   def setUp(self):
     self.factory = APIRequestFactory()
     self.client = APIClient()
-  
+
   @responses.activate
   def test_file_upload(self):
     #TODO: Mock call to IPFS for temporary file storage
@@ -41,10 +41,11 @@ class TestFileUploadEndpoint(APITestCase):
     )
 
     response = self.client.post(
-      '/quote/123565/upload?nonce=1669286323&signature=ffcdc15308e195bbf3d9eb9af1a6a4f37dc9aba72e620dbbd1dffa634e897d46',
+      '/upload?quoteId=123565&nonce=1768214571&signature=0ee382b39a39e05500d99233cdca83cd9959be4ff557ce7f3f29c9ce99d3b5de',
       {'file1':image_mock, 'file2':image2_mock},
       format="multipart"
     )
+
     # Assert proper HTTP status code
     self.assertEqual(response.status_code, status.HTTP_200_OK)
     # Assert content of the response itself, pure JSON

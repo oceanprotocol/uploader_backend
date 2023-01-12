@@ -1,39 +1,27 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
 import requests
 import json
-import random
-import hashlib
-from datetime import datetime
 from rest_framework import serializers
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, inline_serializer
+from django.conf import settings
 
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
+from .utils import check_params_validity
 
 
-class StorageList(APIView):
+# Storage service creation class 
+class StorageCreationView(APIView):
   write_serializer_class = CreateStorageSerializer
-  read_serializer_class = StorageSerializer
-  # Info endpoint listing all available storages
-  @csrf_exempt
-  def get(self, request, format=None):
-    """
-    List all available storages
-    """
-    storages = Storage.objects.all()
-    serializer = self.read_serializer_class(storages, many=True)
-    return Response(serializer.data, status=200)
 
-  # Storage creation endpoint
   @csrf_exempt
   def post(self, request):
     """
-    POST a quote, handle different error code
+    POST a storage service, handling different error code
     """
     data = JSONParser().parse(request)
 
@@ -66,8 +54,22 @@ class StorageList(APIView):
       return Response('Input data is invalid.', status=400)
 
 
+# Storage service listing class 
+class StorageListView(APIView):
+  read_serializer_class = StorageSerializer
+  # Info endpoint listing all available storages
+  @csrf_exempt
+  def get(self, request, format=None):
+    """
+    List all available storages
+    """
+    storages = Storage.objects.all()
+    serializer = self.read_serializer_class(storages, many=True)
+    return Response(serializer.data, status=200)
+
+
 # Quote creation endpoint
-class QuoteList(APIView):
+class QuoteCreationView(APIView):
   @csrf_exempt
   @extend_schema(
     # extra parameters added to the schema
@@ -151,14 +153,16 @@ class QuoteList(APIView):
       return Response(serializer.errors, status=400)
     else: return Response('Storage service response badly formatted', status=400)
 
+
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
-class QuoteStatus(APIView):
+class QuoteStatusView(APIView):
   @csrf_exempt
-  def get(self, request, quoteId):
+  def get(self, request):
     """
     Retrieve a quote status from the associated micro-service
     """
     try:
+      quoteId = request.GET.get('quoteId')
       quote = Quote.objects.get(quoteId=quoteId)
 
       # Request status of quote from micro-service
@@ -177,32 +181,13 @@ class QuoteStatus(APIView):
       'status': quote.status
     })
 
-def check_params_validity(params, quote):
-  if not all(key in params for key in ('nonce', 'signature')):
-    return Response("Missing query parameters.", status=400)
 
-  # Check expiration date of the quote vs current date
-  if quote.expiration < timezone.now():
-    return Response("Quote already expired, please create a new one.", status=400)
-
-  # Check nonce
-  if not str(round(quote.nonce.timestamp())) < params['nonce'][0]:
-    return Response("Nonce value invalid.", status=400)
-
-  # Check signature
-  sha256_hash = hashlib.sha256((str(quote.quoteId) + str(params['nonce'][0])).encode('utf-8')).hexdigest()
-  if not sha256_hash == params['signature'][0]:
-    return Response("Invalid signature.", status=400)
-
-  quote.nonce = datetime.fromtimestamp(int(params['nonce'][0]), timezone.utc)
-  quote.save()
-
-  return True
-
+# Upload file associated with a quote endpoint
 class UploadFile(APIView):
   @csrf_exempt
-  def post(self, request, quoteId, format="multipart"):
+  def post(self, request, format="multipart"):
     params = {**request.GET}
+    quoteId = request.GET.get('quoteId')
 
     quote = Quote.objects.get(quoteId=quoteId)
     if not quote:
@@ -220,7 +205,8 @@ class UploadFile(APIView):
 
     # Forward the files to IPFS, retrieve whatever the hash they provide us, mocked in the test
     files_reference = []
-    url = "http://127.0.0.1:5001/api/v0/add"
+    url = getattr(settings, 'IPFS_SERVICE_ENDPOINT', "http://127.0.0.1:5001/api/v0/add")
+
     response = requests.post(url, files=request.FILES)
     files=response.text.splitlines()
     for file in files:
@@ -260,15 +246,19 @@ class UploadFile(APIView):
 
     return Response("Looks like something failed", status=400)
 
+
 class QuoteLink(APIView):
   @csrf_exempt
-  def get(self, request, quoteId):
+  def get(self, request):
     params = {**request.GET}
+    quoteId = request.GET.get('quoteId')
     quote = Quote.objects.get(quoteId=quoteId)
+  
     if not quote:
       return Response("No quote associated with the request found.", status=400)
 
     is_valid = check_params_validity(params, quote)
+
     if isinstance(is_valid, Response):
       return is_valid
 
@@ -277,7 +267,7 @@ class QuoteLink(APIView):
     """
     # Request status of quote from micro-service
     response = requests.get(
-      quote.storage.url + 'quote/' + str(quoteId) + '/link?nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
+      quote.storage.url + 'getLink?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
     )
 
     return Response({
