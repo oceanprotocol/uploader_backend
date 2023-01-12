@@ -7,7 +7,7 @@ async-timeout==4.0.2
 attrs==22.1.0
 backports.zoneinfo;python_version<="3.9"
 base58==2.1.1
-certifi==2022.9.24
+certifi==2022.12.7
 charset-normalizer==2.1.1
 Django==4.1.2
 django-ipfs-storage==0.0.4
