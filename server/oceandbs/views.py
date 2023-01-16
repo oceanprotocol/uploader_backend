@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, inline_serializer
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, inline_serializer, OpenApiParameter
 from django.conf import settings
 
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
@@ -259,6 +259,35 @@ class QuoteCreationView(APIView):
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
 class QuoteStatusView(APIView):
   @csrf_exempt
+  @extend_schema(
+    request=[],
+    parameters=[
+      OpenApiParameter(
+        name='quoteId',
+        description='Quote ID',
+        type=int
+      )
+    ],
+    examples=[
+      OpenApiExample(
+        "QuoteStatusResponseExample",
+        value={
+          "status": 0,
+        },
+        request_only=False,
+        response_only=True
+      )
+    ],
+    responses={
+      200: inline_serializer(
+        name='QuoteStatusResponseExample',
+        fields={
+          'status': serializers.IntegerField()
+        }
+      ),
+      404: OpenApiResponse(description='Quote does not exist.'),
+    }
+  )
   def get(self, request):
     """
     Retrieve a quote status from the associated micro-service
@@ -277,7 +306,7 @@ class QuoteStatusView(APIView):
         quote.save()
 
     except Quote.DoesNotExist:
-      return HttpResponse(status=404)
+      return Response('Quote does not exist.', status=404)
 
     return Response({
       'status': quote.status
@@ -303,7 +332,7 @@ class UploadFile(APIView):
     if not request.FILES:
       return Response("No file sent alongside the request.", status=400)
 
-    #TODO: Check upload status to see if files have not been already uploaded
+    # Check upload status to see if files have not been already uploaded
     if quote.status in [UPLOAD_CODE[4], UPLOAD_CODE[5]]:
       return Response("Files already uploaded.", status=400)
 
