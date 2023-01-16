@@ -102,9 +102,53 @@ class StorageCreationView(APIView):
 # Storage service listing class 
 class StorageListView(APIView):
   read_serializer_class = StorageSerializer
+  
   # Info endpoint listing all available storages
   @csrf_exempt
-  def get(self, request, format=None):
+  @extend_schema(
+    request=[],
+    parameters=[],
+    examples=[
+      OpenApiExample(
+        "StorageListResponseExample",
+        value=[{
+            "type": "filecoin",
+            "description": "File storage on FileCoin",
+            "paymentMethods": [
+              {
+                "chainId": "1",
+                "acceptedTokens": [
+                  {
+                    "OCEAN": "0xOCEAN_on_MAINNET"
+                  },
+                  {
+                    "DAI": "0xDAI_ON_MAINNET"
+                  }
+                ]
+              },
+              {
+                "chainId": "polygon_chain_id",
+                "acceptedTokens": [
+                  {
+                    "OCEAN": "0xOCEAN_on_POLYGON"
+                  },
+                  {
+                    "DAI": "0xDAI_ON_POLYGON"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        request_only=False,
+        response_only=True
+      )
+    ],
+    responses={
+       200: StorageSerializer
+    }
+  )
+  def get(self, request):
     """
     List all available storages
     """
