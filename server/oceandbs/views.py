@@ -137,7 +137,7 @@ class QuoteCreationView(APIView):
       storage = Storage.objects.get(type=data.pop('type'))
       # If not exists, raise error
     except:
-      return Response('Storage service does not exist.', status=400)
+      return Response('Chosen storage type does not exist.', status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
     response = requests.post(
