@@ -20,6 +20,50 @@ class StorageCreationView(APIView):
   write_serializer_class = CreateStorageSerializer
 
   @csrf_exempt
+  @extend_schema(
+    request=[],
+    parameters=[],
+    examples=[
+      OpenApiExample(
+        "StorageCreationRequestExample",
+        value={
+          "type": "filecoin",
+          "description":  "File storage on FileCoin",
+          "url": "http://microservice.url",
+          "paymentMethods":[
+            {
+              "chainId": "1",
+              "acceptedTokens": [
+                {
+                  "OCEAN": "0xOCEAN_on_MAINNET"
+                },
+                {
+                  "DAI": "0xDAI_ON_MAINNET"
+                }
+              ]
+            },
+            {
+              "chainId": "polygon_chain_id",
+              "acceptedTokens": [
+                {
+                  "OCEAN": "0xOCEAN_on_POLYGON" 
+                },
+                {
+                  "DAI": "0xDAI_ON_POLYGON"
+                }
+              ]
+            }
+          ]
+        },
+        request_only=True,
+        response_only=False
+      )
+    ],
+    responses={
+      201: OpenApiResponse(description='Desired storage created.'),
+      400: OpenApiResponse(description='Invalid input data.'),
+    }
+  )
   def post(self, request):
     """
     POST a storage service, handling different error code
@@ -52,7 +96,7 @@ class StorageCreationView(APIView):
           storage = serializer.save()
           return Response('Desired storage created.', status=201)
 
-      return Response('Input data is invalid.', status=400)
+      return Response('Invalid input data.', status=400)
 
 
 # Storage service listing class 
