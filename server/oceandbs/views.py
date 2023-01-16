@@ -216,6 +216,12 @@ class UploadFile(APIView):
       return Response("No file sent alongside the request.", status=400)
 
     #TODO: Check upload status to see if files have not been already uploaded
+    if quote.status in [UPLOAD_CODE[4], UPLOAD_CODE[5]]:
+      return Response("Files already uploaded.", status=400)
+
+    # Stating that files are currently uploading
+    quote.status = UPLOAD_CODE[4]
+    quote.save()
 
     # Forward the files to IPFS, retrieve whatever the hash they provide us, mocked in the test
     files_reference = []
@@ -248,17 +254,14 @@ class UploadFile(APIView):
     )
 
     if (response.status_code == 200):
-      #TODO: Arrange upload codes
-      quote.status = UPLOAD_CODE[4]
+      quote.status = UPLOAD_CODE[5]
       quote.save()
 
       return Response("File upload succeeded", status=200)
 
-    #TODO: Arrange upload codes
-    quote.status = UPLOAD_CODE[5]
+    quote.status = UPLOAD_CODE[6]
     quote.save()
-
-    return Response("Looks like something failed", status=400)
+    return Response("Looks like something failed", status=401)
 
 
 class QuoteLink(APIView):
@@ -284,6 +287,7 @@ class QuoteLink(APIView):
       quote.storage.url + 'getLink?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
     )
 
+    #TODO: improve that by managing the different link format from different services.
     return Response({
       "type": quote.storage.type,
       "CID": json.loads(response.content)[0]['CID']
