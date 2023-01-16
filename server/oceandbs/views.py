@@ -3,10 +3,11 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
 from rest_framework import serializers
+
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, inline_serializer
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from django.conf import settings
 
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
@@ -67,16 +68,15 @@ class StorageListView(APIView):
     serializer = self.read_serializer_class(storages, many=True)
     return Response(serializer.data, status=200)
 
-
 # Quote creation endpoint
 class QuoteCreationView(APIView):
   @csrf_exempt
   @extend_schema(
-    # extra parameters added to the schema
+    request=[],
     parameters=[],
     examples=[
       OpenApiExample(
-        'Request body example',
+        "QuoteCreationRequestExample",
         value={
           "type": "filecoin",
           "files": [
@@ -91,21 +91,35 @@ class QuoteCreationView(APIView):
               "wallet_address": "0xOCEAN_on_MAINNET"
           },
           "userAddress": "0x456"
-        }
+        },
+        request_only=True, # signal that example only applies to requests
+        response_only=False
+      ),
+      OpenApiExample(
+        "QuoteCreationResponseExample",
+        value={
+          "tokenAmount": 500,
+          "approveAddress": "0x123",
+          "chainId": 1,
+          "tokenAddress": "0xOCEAN_on_MAINNET",
+          "quoteId": "xxxx"
+        },
+        request_only=False,
+        response_only=True
       )
     ],
     responses={
-       200: inline_serializer(
-          name='Response body example',
+       201: inline_serializer(
+          name='ResponseBodyExample',
           fields={
             'tokenAmount': serializers.IntegerField(),
             'approveAddress': serializers.CharField(),
             'chainId': serializers.IntegerField(),
             'tokenAddress': serializers.CharField(),
             'tokenAddress': serializers.CharField(),
-          },
+          }
        ), 
-       400: OpenApiResponse(description='Missing callsign'),
+       400: OpenApiResponse(description='Storage service response badly formatted.'),
     }
   )
   def post(self, request):
@@ -123,7 +137,7 @@ class QuoteCreationView(APIView):
       storage = Storage.objects.get(type=data.pop('type'))
       # If not exists, raise error
     except:
-      return Response('Chosen storage type does not exist.', status=400)
+      return Response('Storage service does not exist.', status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
     response = requests.post(
@@ -151,7 +165,7 @@ class QuoteCreationView(APIView):
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)
-    else: return Response('Storage service response badly formatted', status=400)
+    else: return Response('Storage service response badly formatted.', status=400)
 
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
