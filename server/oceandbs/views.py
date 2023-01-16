@@ -435,6 +435,49 @@ class UploadFile(APIView):
 
 class QuoteLink(APIView):
   @csrf_exempt
+  @extend_schema(
+    request=[],
+    parameters=[
+      OpenApiParameter(
+        name='quoteId',
+        description='Quote ID',
+        type=int
+      ),
+      OpenApiParameter(
+        name='nonce',
+        description='Nonce',
+        type=int
+      ),
+      OpenApiParameter(
+        name='signature',
+        description='Signature',
+        type=str
+      )
+    ],
+    examples=[
+      OpenApiExample(
+        "QuoteLinkResponseExample",
+        value=[
+          {
+            "type": "filecoin",
+            "CID": "xxxx",
+          }
+        ],
+        request_only=False,
+        response_only=True
+      )
+    ],
+    responses={
+      200: inline_serializer(
+        name='QuoteLinkResponseSerializer',
+        fields={
+          'type': serializers.IntegerField(),
+          'CID': serializers.CharField()
+        }
+      ),
+      404: OpenApiResponse(description='Quote does not exist.'),
+    }
+  )
   def get(self, request):
     params = {**request.GET}
     quoteId = request.GET.get('quoteId')
