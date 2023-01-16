@@ -158,7 +158,8 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Here you will find the list of all endpoints available when you deploy this project as a decentralized backend storage API for Ocean \
          including the available endpoints, methods, needed parameters and requests examples.',
     'VERSION': '0.0.1',
-    'SERVE_INCLUDE_SCHEMA': False
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True
 }
 
 #########################

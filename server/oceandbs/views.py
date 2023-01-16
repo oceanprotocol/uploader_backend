@@ -292,37 +292,89 @@ class QuoteStatusView(APIView):
     """
     Retrieve a quote status from the associated micro-service
     """
+    quoteId = request.GET.get('quoteId')
     try:
-      quoteId = request.GET.get('quoteId')
       quote = Quote.objects.get(quoteId=quoteId)
-
-      # Request status of quote from micro-service
-      response = requests.get(
-        quote.storage.url + 'quote/' + str(quoteId)
-      )
-
-      if (response.status_code == 200):
-        quote.status = json.loads(response.content)['status']
-        quote.save()
-
     except Quote.DoesNotExist:
       return Response('Quote does not exist.', status=404)
+
+    # Request status of quote from micro-service
+    response = requests.get(
+      quote.storage.url + 'quote/' + str(quoteId)
+    )
+
+    if (response.status_code == 200):
+      quote.status = json.loads(response.content)['status']
+      quote.save()
 
     return Response({
       'status': quote.status
     })
 
-
+# "/upload?quoteId=123565&nonce=1768214571&signature=0ee382b39a39e05500d99233cdca83cd9959be4ff557ce7f3f29c9ce99d3b5de"
 # Upload file associated with a quote endpoint
 class UploadFile(APIView):
   @csrf_exempt
+  @extend_schema(
+    parameters=[
+      OpenApiParameter(
+        name='quoteId',
+        description='Quote ID',
+        type=int
+      ),
+      OpenApiParameter(
+        name='nonce',
+        description='Nonce',
+        type=int
+      ),
+      OpenApiParameter(
+        name='signature',
+        description='Signature',
+        type=str
+      )
+    ],
+    request= {
+      "multipart/form-data": inline_serializer(
+        name="InlineFormSerializer",
+        fields={
+          "file1": serializers.FileField(),
+          "file2": serializers.FileField(),
+        }
+      )
+    },
+    examples=[
+      OpenApiExample(
+        "FileUploadRequestExample",
+        value={
+          'file1':{'name':'image.png', 'Hash':'QmPmnyA8ZaYFJknPhVBE1u4hbGqvLGvu5cxCAPb1Nqb1aq',"size":"59"},
+          'file2':{"Name":"image2.png",'Hash':'QmUq54U3BVx9vSKRSNVoSCoLD9wBkeDXrzK7FqRgdgnCGK',"size":"59"},
+        },
+        media_type='application/x-www-form-urlencoded',
+        request_only=True,
+        response_only=False
+      ),
+      OpenApiExample(
+        "FileUploadResponseExample",
+        value={
+          "File upload succeeded."
+        },
+        request_only=False,
+        response_only=True
+      )
+    ],
+    responses={
+      200: OpenApiResponse(description='File upload succeeded.'),
+      400: OpenApiResponse(description='Looks like something failed.'),
+    }
+  )
   def post(self, request, format="multipart"):
     params = {**request.GET}
     quoteId = request.GET.get('quoteId')
 
-    quote = Quote.objects.get(quoteId=quoteId)
-    if not quote:
-      return Response("No quote associated with the request found.", status=400)
+    try:
+      quote = Quote.objects.get(quoteId=quoteId)
+    except Quote.DoesNotExist:
+      return Response('Quote does not exist.', status=404)
 
     is_valid = check_params_validity(params, quote)
     if isinstance(is_valid, Response):
@@ -374,11 +426,11 @@ class UploadFile(APIView):
       quote.status = UPLOAD_CODE[5]
       quote.save()
 
-      return Response("File upload succeeded", status=200)
+      return Response("File upload succeeded.", status=200)
 
     quote.status = UPLOAD_CODE[6]
     quote.save()
-    return Response("Looks like something failed", status=401)
+    return Response("Looks like something failed.", status=401)
 
 
 class QuoteLink(APIView):
@@ -386,10 +438,11 @@ class QuoteLink(APIView):
   def get(self, request):
     params = {**request.GET}
     quoteId = request.GET.get('quoteId')
-    quote = Quote.objects.get(quoteId=quoteId)
-  
-    if not quote:
-      return Response("No quote associated with the request found.", status=400)
+
+    try:
+      quote = Quote.objects.get(quoteId=quoteId)
+    except Quote.DoesNotExist:
+      return Response('Quote does not exist.', status=404)
 
     is_valid = check_params_validity(params, quote)
 

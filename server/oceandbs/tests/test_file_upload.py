@@ -27,14 +27,14 @@ class TestFileUploadEndpoint(APITestCase):
 
   @responses.activate
   def test_file_upload(self):
-    #TODO: Mock call to IPFS for temporary file storage
+    # Mock call to IPFS for temporary file storage
     responses.post(
       url= 'http://127.0.0.1:5001/api/v0/add',
       body='{"Name":"image.png","Hash":"QmPmnyA8ZaYFJknPhVBE1u4hbGqvLGvu5cxCAPb1Nqb1aq","Size":"59"}\n{"Name":"image2.png","Hash":"QmUq54U3BVx9vSKRSNVoSCoLD9wBkeDXrzK7FqRgdgnCGK","Size":"59"}',
       status=200
     )
 
-    #TODO: Mock call to Storage Service for actual file storage
+    # Mock call to Storage Service for actual file storage
     responses.post(
       url= 'https://filecoin.org/upload/',
       status=200
@@ -49,7 +49,7 @@ class TestFileUploadEndpoint(APITestCase):
     # Assert proper HTTP status code
     self.assertEqual(response.status_code, status.HTTP_200_OK)
     # Assert content of the response itself, pure JSON
-    self.assertEqual(response.data, "File upload succeeded")
+    self.assertEqual(response.data, "File upload succeeded.")
 
     self.assertEqual(len(DBSFile.objects.all()), 2)
     self.assertEqual(len(Quote.objects.all()), 1)
