@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  dbs:
+    build: .
+    ports:
+      - "8000:8000"
+  dbs_filecoin:
+    build: ./services/dbs_filecoin/
+  # dbs_arweave:
+  #   build: ./services/dbs_arweave/
