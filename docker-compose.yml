@@ -8,3 +8,9 @@ services:
     build: ./services/dbs_filecoin/
   # dbs_arweave:
   #   build: ./services/dbs_arweave/
+  ipfs:
+    image: ipfs/kubo
+    network_mode: host
+  ipfs-cluster:
+    image: ipfs/ipfs-cluster
+    network_mode: host
