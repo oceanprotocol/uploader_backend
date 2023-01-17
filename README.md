@@ -24,6 +24,14 @@ You can create a superuser with `./manage.py createsuperuser` to be able to acce
 ## Usage
 You can navigate the API using the url `http://myserver.com/docs/` (Swagger based OpenAPI documentation, default on localhost:8000).
 
+# Dockerfile usage
+You can also just build the available Dockerfile and run the server from there using the following commands:
+
+```sh
+docker build -t ocean-dbs .
+docker run -p 8000:8000 ocean-dbs
+```
+
 ## Support
 Please open issues on github if you need support of have any questions.
 
