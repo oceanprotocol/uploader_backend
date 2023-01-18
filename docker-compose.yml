@@ -6,6 +6,7 @@ services:
       - "8000:8000"
   dbs_filecoin:
     build: ./services/dbs_filecoin/
+    env_file: .env # Used to provide the filecoin env variables
   # dbs_arweave:
   #   build: ./services/dbs_arweave/
   ipfs:
