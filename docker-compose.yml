@@ -14,8 +14,6 @@ services:
       MARIADB_PASS: pass
       MARIADB_DATABASE: filecoin_dbs
       MARIADB_HOST: 127.0.0.1
-    ports:
-      - 3306:3306
     healthcheck:
       test: mariadb --user=root --password=root --silent --execute "use filecoin_dbs;"
       interval: 1s
@@ -23,6 +21,7 @@ services:
       retries: 10
     volumes:
       - ./mounts/mariadb:/var/lib/mariadb
+    network_mode: host
   dbs_filecoin:
     container_name: filecoin
     build: ./services/dbs_filecoin/
@@ -30,6 +29,7 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    network_mode: host
   # dbs_arweave:
   #   build: ./services/dbs_arweave/
   ipfs:
