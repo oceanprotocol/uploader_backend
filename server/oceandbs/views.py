@@ -29,7 +29,7 @@ class StorageCreationView(APIView):
         value={
           "type": "filecoin",
           "description":  "File storage on FileCoin",
-          "url": "http://microservice.url",
+          "url": "http://localhost:3000/",
           "paymentMethods":[
             {
               "chainId": "1",
