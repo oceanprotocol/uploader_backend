@@ -238,8 +238,7 @@ class QuoteCreationView(APIView):
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
-      data['payment']['paymentMethod'] = []
-      data['payment']['paymentMethod']['chainId'] = data['payment']['chainId'] 
+      data['payment']['paymentMethod'] = {'chainId': data['payment']['chainId']}
       data['payment']['wallet_adress'] = data['payment']['tokenAddress'] 
 
       serializer = QuoteSerializer(data=data)
