@@ -25,6 +25,7 @@ SECRET_KEY = '6e_qi$a_w5rni$dl)!r-xq-h*=da6q3#4gs4k3%+p(bd42yrv+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+PYTHONUNBUFFERED = True
 
 ALLOWED_HOSTS = []
 

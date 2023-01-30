@@ -173,12 +173,10 @@ class QuoteCreationView(APIView):
           ],
           "duration": 4353545453,
           "payment": {
-              "payment_method": {
-                "chainId": 1,
-              },
-              "wallet_address": "0xOCEAN_on_MAINNET"
+              "chainId": 80001,
+              "tokenAddress": "0x9aa7fEc87CA69695Dd1f879567CcF49F3ba417E2"
           },
-          "userAddress": "0x456"
+          "userAddress": "0x6aa0ee41fa9cf65f90c06e5db8fa2834399b59b37974b21f2e405955630d472a"
         },
         request_only=True, # signal that example only applies to requests
         response_only=False
@@ -222,7 +220,7 @@ class QuoteCreationView(APIView):
 
     # From type, retrieve associated storage object
     try:
-      storage = Storage.objects.get(type=data.pop('type'))
+      storage = Storage.objects.get(type=data['type'])
       # If not exists, raise error
     except:
       return Response('Chosen storage type does not exist.', status=400)
@@ -240,7 +238,9 @@ class QuoteCreationView(APIView):
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
-      data['payment']['paymentMethod'] = data['payment'].pop('payment_method')
+      data['payment']['paymentMethod'] = []
+      data['payment']['paymentMethod']['chainId'] = data['payment']['chainId'] 
+      data['payment']['wallet_adress'] = data['payment']['tokenAddress'] 
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():

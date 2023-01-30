@@ -2,8 +2,10 @@ version: "3.9"
 services:
   dbs:
     build: .
-    ports:
-      - "8000:8000"
+    network_mode: host
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DJANGO_LOG_LEVEL=DEBUG=value
   mariadb:
     container_name: ${APP_NAME}_mariadb
     image: mariadb
@@ -19,8 +21,8 @@ services:
       interval: 1s
       timeout: 3s
       retries: 10
-    volumes:
-      - ./mounts/mariadb:/var/lib/mariadb
+    # volumes:
+    #   - ./mounts/mariadb:/var/lib/mariadb
     network_mode: host
   dbs_filecoin:
     container_name: filecoin
