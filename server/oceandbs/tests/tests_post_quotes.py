@@ -22,10 +22,8 @@ class TestCreateQuoteEndpoint(APITestCase):
       ],
       "duration": 4353545453,
       "payment": {
-          "payment_method": {
-            "chainId": 1,
-          },
-          "wallet_address": "0xOCEAN_on_MAINNET"
+          "chainId": 1,
+          "tokenAddress": "0xOCEAN_on_MAINNET"
       },
       "userAddress": "0x456"
     }
