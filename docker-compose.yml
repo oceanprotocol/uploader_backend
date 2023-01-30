@@ -6,6 +6,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DJANGO_LOG_LEVEL=DEBUG=value
+    volumes:
+      - .:/usr/src/app
   mariadb:
     container_name: ${APP_NAME}_mariadb
     image: mariadb
