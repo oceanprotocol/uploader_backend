@@ -34,8 +34,11 @@ services:
       mariadb:
         condition: service_healthy
     network_mode: host
-  # dbs_arweave:
-  #   build: ./services/dbs_arweave/
+  dbs_arweave:
+    container_name: arweave
+    build: ./services/dbs_arweave/
+    env_file: .env
+    network_mode: host
   ipfs:
     image: ipfs/kubo
     network_mode: host
