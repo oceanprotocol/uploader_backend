@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
-from rest_framework import serializers
+from rest_framework import serializers, parsers
 
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
@@ -18,6 +18,7 @@ from .utils import check_params_validity
 # Storage service creation class 
 class StorageCreationView(APIView):
   write_serializer_class = CreateStorageSerializer
+  parser_classes = (parsers.JSONParser,)
 
   @csrf_exempt
   @extend_schema(
@@ -68,7 +69,7 @@ class StorageCreationView(APIView):
     """
     POST a storage service, handling different error code
     """
-    data = JSONParser().parse(request)
+    data = request.data
 
     # Make sure request data contains type and files
     if (not 'type' in data):
@@ -159,6 +160,7 @@ class StorageListView(APIView):
 
 # Quote creation endpoint
 class QuoteCreationView(APIView):
+  parser_classes = (parsers.JSONParser,)
   @csrf_exempt
   @extend_schema(
     request=[],
@@ -213,7 +215,7 @@ class QuoteCreationView(APIView):
     """
     POST a quote, handle different error code
     """
-    data = JSONParser().parse(request)
+    data = request.data
 
     # Make sure request data contains type and files
     if (not 'type' in data or not 'files' in data):
@@ -224,7 +226,7 @@ class QuoteCreationView(APIView):
       storage = Storage.objects.get(type=data['type'])
       # If not exists, raise error
     except:
-      return Response('Chosen storage type does not exist.', status=400)
+      return Response({'error': 'Chosen storage type does not exist.'}, status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
     headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
@@ -409,7 +411,7 @@ class UploadFile(APIView):
 
       # Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
       File.objects.create(quote=quote, **added_file)
-      files_reference.append(added_file['cid'])
+      files_reference.append("ipfs://" + str(added_file['cid']))
 
     data = {
       "quoteId": quote.quoteId,
@@ -420,7 +422,7 @@ class UploadFile(APIView):
 
     # Upload files to micro-service
     response = requests.post(
-      quote.storage.url + 'upload/',
+      quote.storage.url + 'upload/?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0],
       data
     )
 
