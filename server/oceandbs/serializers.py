@@ -13,13 +13,13 @@ class CreatePaymentMethodSerializer(serializers.ModelSerializer):
     fields=['chainId', 'acceptedTokens']
 
 class CreateStorageSerializer(serializers.ModelSerializer):
-  paymentMethods = CreatePaymentMethodSerializer(many=True)
+  payment = CreatePaymentMethodSerializer(many=True)
   class Meta:
     model = Storage
-    fields = ['type', 'description', 'url', 'paymentMethods']
+    fields = ['type', 'description', 'url', 'payment']
 
   def create(self, validated_data):
-    payment_method_data = validated_data.pop('paymentMethods')
+    payment_method_data = validated_data.pop('payment')
     storage = Storage.objects.create(**validated_data)
 
     for method in payment_method_data:
@@ -49,10 +49,10 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
 
 
 class StorageSerializer(serializers.ModelSerializer):
-  paymentMethods = PaymentMethodSerializer(many=True)
+  payment = PaymentMethodSerializer(many=True)
   class Meta:
     model = Storage
-    fields = ['type', 'description', 'paymentMethods']
+    fields = ['type', 'description', 'payment']
 
 
 class PaymentSerializer(serializers.ModelSerializer):

@@ -30,7 +30,7 @@ class StorageCreationView(APIView):
           "type": "filecoin",
           "description":  "File storage on FileCoin",
           "url": "http://localhost:3000/",
-          "paymentMethods":[
+          "payment":[
             {
               "chainId": "1",
               "acceptedTokens": [
@@ -114,7 +114,7 @@ class StorageListView(APIView):
         value=[{
             "type": "filecoin",
             "description": "File storage on FileCoin",
-            "paymentMethods": [
+            "payment": [
               {
                 "chainId": "1",
                 "acceptedTokens": [
@@ -226,9 +226,11 @@ class QuoteCreationView(APIView):
       return Response('Chosen storage type does not exist.', status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
+    headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
     response = requests.post(
       storage.url + 'getQuote/',
-      data
+      json.dumps(data),
+      headers=headers
     )
 
     # From the response data:
