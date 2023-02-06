@@ -81,7 +81,8 @@ class StorageCreationView(APIView):
       if storage:
         return Response('Chosen storage type already exists.', status=400)
     except:
-      for payment_method in data['paymentMethods']:
+      # print(data['payment'])
+      for payment_method in data['payment']:
         transit_table = []
         for token in payment_method['acceptedTokens']:
           accepted_token={}
@@ -166,7 +167,7 @@ class QuoteCreationView(APIView):
       OpenApiExample(
         "QuoteCreationRequestExample",
         value={
-          "type": "filecoin",
+          "type": "arweave",
           "files": [
             {"length":2343545},
             {"length":2343545}
@@ -174,9 +175,9 @@ class QuoteCreationView(APIView):
           "duration": 4353545453,
           "payment": {
               "chainId": 80001,
-              "tokenAddress": "0x9aa7fEc87CA69695Dd1f879567CcF49F3ba417E2"
+              "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
           },
-          "userAddress": "0x6aa0ee41fa9cf65f90c06e5db8fa2834399b59b37974b21f2e405955630d472a"
+          "userAddress": "0xAFcE990754C38Be5E0C341707B2A162C4e67547B"
         },
         request_only=True, # signal that example only applies to requests
         response_only=False
@@ -254,7 +255,7 @@ class QuoteCreationView(APIView):
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)
-    else: return Response('Storage service response badly formatted.', status=400)
+    else: return Response({'error': 'Storage service response badly formatted.'}, status=400)
 
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
@@ -266,7 +267,7 @@ class QuoteStatusView(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       )
     ],
     examples=[
@@ -301,7 +302,7 @@ class QuoteStatusView(APIView):
 
     # Request status of quote from micro-service
     response = requests.get(
-      quote.storage.url + 'quote/' + str(quoteId)
+      quote.storage.url  + 'getStatus?quoteId=' + str(quoteId)
     )
 
     if (response.status_code == 200):
@@ -321,7 +322,7 @@ class UploadFile(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       ),
       OpenApiParameter(
         name='nonce',
@@ -442,7 +443,7 @@ class QuoteLink(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       ),
       OpenApiParameter(
         name='nonce',

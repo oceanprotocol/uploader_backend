@@ -13,7 +13,7 @@ def check_params_validity(params, quote):
     return Response("Quote already expired, please create a new one.", status=400)
 
   # Check nonce
-  if not str(round(quote.nonce.timestamp())) < params['nonce'][0]:
+  if str(round(quote.nonce.timestamp())) > params['nonce'][0]:
     return Response("Nonce value invalid.", status=400)
 
   # Check signature
