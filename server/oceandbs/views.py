@@ -315,7 +315,6 @@ class QuoteStatusView(APIView):
       'status': quote.status
     })
 
-# "/upload?quoteId=123565&nonce=1768214571&signature=0ee382b39a39e05500d99233cdca83cd9959be4ff557ce7f3f29c9ce99d3b5de"
 # Upload file associated with a quote endpoint
 class UploadFile(APIView):
   @csrf_exempt
@@ -504,8 +503,19 @@ class QuoteLink(APIView):
       quote.storage.url + 'getLink?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
     )
 
-    #TODO: improve that by managing the different link format from different services.
-    return Response({
-      "type": quote.storage.type,
-      "CID": json.loads(response.content)[0]['CID']
-    })
+    print(json.loads(response.content))
+    if response.status_code == 400:
+      return Response(json.loads(response.content), status=400)
+
+    if quote.storage.type == "arweave":
+      #TODO: improve that by managing the different link format from different services.
+      return Response({
+        "type": quote.storage.type,
+        "CID": json.loads(response.content)[0]['CID']
+      })
+    elif quote.storage.type == "filecoin":
+      #TODO: improve that by managing the different link format from different services.
+      return Response({
+        "type": quote.storage.type,
+        "CID": json.loads(response.content)[0]['CID']
+      })

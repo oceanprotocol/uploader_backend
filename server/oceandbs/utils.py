@@ -16,10 +16,14 @@ def check_params_validity(params, quote):
   if str(round(quote.nonce.timestamp())) > params['nonce'][0]:
     return Response("Nonce value invalid.", status=400)
 
+  # Use verifyMessage from web3/ethereum API
+  
+  # Then decode message and
   # Check signature
   sha256_hash = hashlib.sha256((str(quote.quoteId) + str(params['nonce'][0])).encode('utf-8')).hexdigest()
   if not sha256_hash == params['signature'][0]:
     return Response("Invalid signature.", status=400)
+
 
   quote.nonce = datetime.fromtimestamp(int(params['nonce'][0]), timezone.utc)
   quote.save()
