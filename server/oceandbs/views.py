@@ -549,10 +549,11 @@ class QuoteLink(APIView):
 
     if quote.storage.type == "arweave":
       #TODO: improve that by managing the different link format from different services.
-      return Response({
-        "type": quote.storage.type,
-        "CID": json.loads(response.content)[0]['CID']
-      })
+      responseObj = json.loads(response.content)
+      # result = []
+      # for item in responseObj:
+      #   result.append({''})
+      return Response(responseObj, status=200)
     elif quote.storage.type == "filecoin":
       #TODO: improve that by managing the different link format from different services.
       return Response({
