@@ -17,11 +17,12 @@ def check_params_validity(params, quote):
   if str(round(quote.nonce.timestamp())) > params['nonce'][0]:
     return Response("Nonce value invalid.", status=400)
 
-  message = str(quote.quoteId) + str(params['nonce'][0])
+  message = hashlib.sha256((str(quote.quoteId) + str(params['nonce'][0])).encode('utf-8')).hexdigest()
   message = encode_defunct(text=message)
   # Use verifyMessage from web3/ethereum API
   check_signature = w3.eth.account.recover_message(message, signature=params['signature'][0])
 
+  # print(check_signature)
   if check_signature:
     quote.nonce = datetime.fromtimestamp(int(params['nonce'][0]), timezone.utc)
     quote.save()

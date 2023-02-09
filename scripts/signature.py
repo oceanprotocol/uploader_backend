@@ -25,7 +25,7 @@ def main(argv):
       elif opt in ("-k", "--pkey"):
          pkey = arg
 
-   message = (quoteId + nonce)
+   message = "0x" + hashlib.sha256((str(quoteId) + str(nonce)).encode('utf-8')).hexdigest()
    print(message)
    message = encode_defunct(text=message)
    print(message)
