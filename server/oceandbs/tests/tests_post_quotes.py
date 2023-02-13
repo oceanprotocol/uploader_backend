@@ -106,4 +106,4 @@ class TestCreateQuoteEndpoint(APITestCase):
     )
 
     self.assertEqual(response.status_code, 400)
-    self.assertEqual(response.data, 'Chosen storage type does not exist.')
+    self.assertEqual(response.data, {'error': 'Chosen storage type does not exist.'})

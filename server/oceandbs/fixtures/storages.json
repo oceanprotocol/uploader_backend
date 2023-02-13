@@ -2,19 +2,27 @@
   {
     "model": "oceandbs.paymentmethod",
     "pk": 1,
-    "fields": { "chainId": "1", "storage": 1 }
+    "fields": {
+      "chainId": "80001",
+      "storage": 1,
+      "rpcEndpointUrl": "https://rpc-mumbai.maticvigil.com/"
+    }
   },
   {
     "model": "oceandbs.paymentmethod",
     "pk": 2,
-    "fields": { "chainId": "polygon_chain_id", "storage": 1 }
+    "fields": {
+      "chainId": "135",
+      "storage": 1,
+      "rpcEndpointUrl": "https://rpc-mumbai.maticvigil.com/"
+    }
   },
   {
     "model": "oceandbs.acceptedtoken",
     "pk": 1,
     "fields": {
       "title": "OCEAN",
-      "value": "0xOCEAN_on_MAINNET",
+      "value": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
       "paymentMethod": 1
     }
   },
@@ -32,7 +40,7 @@
     "pk": 3,
     "fields": {
       "title": "OCEAN",
-      "value": "0xOCEAN_on_POLYGON",
+      "value": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
       "paymentMethod": 2
     }
   },
@@ -55,15 +63,24 @@
     }
   },
   {
+    "model": "oceandbs.payment",
+    "pk": 1,
+    "fields": {
+      "paymentMethod": 1,
+      "wallet_address": "0xCC866199C810B216710A3F3714d35920C343a8CD"
+    }
+  },
+  {
     "model": "oceandbs.quote",
     "pk": 1,
     "fields": {
       "quoteId": "123565",
       "storage": 1,
       "duration": 2380293823,
-      "payment": null,
-      "tokenAddress": "0xOCEAN_on_MAINNET",
-      "approveAddress": "0x123",
+      "payment": 1,
+      "tokenAmount": 500,
+      "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+      "approveAddress": "0xAFcE990754C38Be5E0C341707B2A162C4e67547B",
       "status": null
     }
   }

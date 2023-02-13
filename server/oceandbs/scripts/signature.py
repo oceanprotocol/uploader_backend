@@ -1,7 +1,5 @@
-import hashlib
 import sys, getopt
-from web3.auto import w3
-from eth_account.messages import encode_defunct
+from ..utils import generate_signature
 
 def main(argv):
    quoteId = ''
@@ -25,15 +23,10 @@ def main(argv):
       elif opt in ("-k", "--pkey"):
          pkey = arg
 
-   message = "0x" + hashlib.sha256((str(quoteId) + str(nonce)).encode('utf-8')).hexdigest()
-   print(message)
-   message = encode_defunct(text=message)
-   print(message)
-   # Use signMessage from web3 library and etheurem decode_funct to generate the signature
-   signed_message = w3.eth.account.sign_message(message, private_key=pkey)
+   signature = generate_signature(quoteId, nonce, pkey)
 
-   # sha256_hash = hashlib.sha256((quoteId + nonce).encode('utf-8')).hexdigest()
-   print(signed_message)
+   print("Signature:" + str(signature.signature))
+   print("Nonce:" + str(nonce))
 
 if __name__ == "__main__":
    main(sys.argv[1:])
