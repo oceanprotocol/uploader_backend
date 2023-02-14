@@ -16,7 +16,7 @@ class TestLinkEndpoint(APITestCase):
 
   @responses.activate
   def test_get_link_endpoint(self):
-    signature = generate_signature(123565, 1768214571, getattr(settings, 'TEST_PRIVATE_KEY', '00000000000000000000000000000'))
+    signature = generate_signature(123565, 1768214571, getattr(settings, 'TEST_PRIVATE_KEY', ''))
     responses.add_passthru('https://rpc-mumbai.maticvigil.com/')
     
     responses.get(

@@ -175,5 +175,4 @@ ARWEAVE_SERVICE_URL = 'https://storage.arweave.com'
 
 if not os.getenv('GITHUB_WORKFLOW'):
     TEST_PRIVATE_KEY = os.environ.get("TEST_PRIVATE_KEY")
-    PRIVATE_KEY = os.environ.get("PRIVATE_KEY")
     TOKEN_ADDRESS = os.environ.get("TOKEN_ADDRESS")

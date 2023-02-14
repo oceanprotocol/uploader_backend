@@ -24,7 +24,7 @@ class TestFileUploadEndpoint(APITestCase):
 
   @responses.activate
   def test_file_upload(self):
-    signature = generate_signature(123565, 1768214571, getattr(settings, 'TEST_PRIVATE_KEY', '00000000000000000000000000000'))
+    signature = generate_signature(123565, 1768214571, getattr(settings, 'TEST_PRIVATE_KEY', ''))
     responses.add_passthru('https://rpc-mumbai.maticvigil.com/')
     
     # Mock call to IPFS for temporary file storage
