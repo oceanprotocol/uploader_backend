@@ -8,7 +8,7 @@ from eth_account.messages import encode_defunct
 def generate_signature(quoteId, nonce, pkey):
   message = "0x" + hashlib.sha256((str(quoteId) + str(nonce)).encode('utf-8')).hexdigest()
   message = encode_defunct(text=message)
-  
+  print(message)
   # Use signMessage from web3 library and etheurem decode_funct to generate the signature
   signed_message = w3.eth.account.sign_message(message, private_key=pkey)
   return signed_message
