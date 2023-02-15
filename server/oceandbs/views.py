@@ -84,7 +84,6 @@ class StorageCreationView(APIView):
       if storage:
         return Response('Chosen storage type already exists.', status=400)
     except:
-      # print(data['payment'])
       for payment_method in data['payment']:
         transit_table = []
         for token in payment_method['acceptedTokens']:
@@ -92,16 +91,17 @@ class StorageCreationView(APIView):
           accepted_token['title'] = list(token.keys())[0]
           accepted_token['value'] = list(token.values())[0]
           transit_table.append(accepted_token)
-        
+
         payment_method['acceptedTokens'] = transit_table
 
       serializer = self.write_serializer_class(data=data)
       if serializer.is_valid():
           storage = serializer.save()
           return Response('Desired storage created.', status=201)
+      else:
+        print(serializer.errors)
 
       return Response('Invalid input data.', status=400)
-
 
 # Storage service listing class 
 class StorageListView(APIView):

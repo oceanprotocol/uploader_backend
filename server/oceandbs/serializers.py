@@ -23,10 +23,10 @@ class CreateStorageSerializer(serializers.ModelSerializer):
     storage = Storage.objects.create(**validated_data)
 
     for method in payment_method_data:
-        accepted_tokens_data = method.pop('acceptedTokens')
-        payment_method = PaymentMethod.objects.create(storage=storage, **method)
-        for accepted_token in accepted_tokens_data:
-          AcceptedToken.objects.create(paymentMethod=payment_method, **accepted_token)
+      accepted_tokens_data = method.pop('acceptedTokens')
+      payment_method = PaymentMethod.objects.create(storage=storage, **method)
+      for accepted_token in accepted_tokens_data:
+        AcceptedToken.objects.create(paymentMethod=payment_method, **accepted_token)
 
     return storage
 
