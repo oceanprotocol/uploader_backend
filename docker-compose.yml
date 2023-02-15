@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  dbs:
+    build: .
+    network_mode: host
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DJANGO_LOG_LEVEL=DEBUG=value
+    volumes:
+      - .:/usr/src/app
+  mariadb:
+    container_name: ${APP_NAME}_mariadb
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: test
+      MARIADB_PASS: pass
+      MARIADB_DATABASE: filecoin_dbs
+      MARIADB_HOST: 127.0.0.1
+    healthcheck:
+      test: mariadb --user=root --password=root --silent --execute "use filecoin_dbs;"
+      interval: 1s
+      timeout: 3s
+      retries: 10
+    # volumes:
+    #   - ./mounts/mariadb:/var/lib/mariadb
+    network_mode: host
+  dbs_filecoin:
+    container_name: filecoin
+    build: ./services/dbs_filecoin/
+    env_file: .env # Used to provide the filecoin env variables
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    network_mode: host
+  dbs_arweave:
+    container_name: arweave
+    build: ./services/dbs_arweave/
+    env_file: .env
+    network_mode: host
+  ipfs:
+    image: ipfs/kubo
+    network_mode: host
+  ipfs-cluster:
+    image: ipfs/ipfs-cluster
+    network_mode: host

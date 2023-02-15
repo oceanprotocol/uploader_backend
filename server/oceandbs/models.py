@@ -35,7 +35,8 @@ class Storage(models.Model):
 
 class PaymentMethod(models.Model):
   chainId = models.CharField(max_length=256)
-  storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="paymentMethods")
+  storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="payment")
+  rpcEndpointUrl = models.URLField(max_length=2048, default="https://example.com")
 
   def __str__(self):
     return self.chainId + " - " + str(self.storage)

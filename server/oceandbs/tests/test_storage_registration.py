@@ -17,7 +17,7 @@ class TestStorageRegistrationEndpoint(APITestCase):
       "type": "filecoin",
       "description":  "File storage on FileCoin",
       "url": "http://microservice.url",
-      "paymentMethods":[
+      "payment":[
         {
           "chainId": "1",
           "acceptedTokens": [
@@ -88,7 +88,7 @@ class TestStorageRegistrationEndpoint(APITestCase):
       "type": "filecoin",
       "description":  "File storage on FileCoin",
       "url": "http://microservice.url",
-      "paymentMethods":[
+      "payment":[
         {
           "chainId": "1",
           "acceptedTokens": [
@@ -147,7 +147,7 @@ class TestStorageRegistrationEndpoint(APITestCase):
     body = {
       "description":  "File storage on FileCoin",
       "url": "http://microservice.url",
-      "paymentMethods":[
+      "payment":[
         {
           "chainId": "1",
           "acceptedTokens": [

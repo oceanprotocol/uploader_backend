@@ -14,7 +14,7 @@ class TestQuoteStatusEndpoint(APITestCase):
   @responses.activate
   def test_quote_status_endpoint(self):
     responses.get(
-      url= 'https://filecoin.org/quote/123565',
+      url= 'https://filecoin.org/getStatus?quoteId=123565',
       json={
         'status': 200
       },

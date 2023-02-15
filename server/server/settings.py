@@ -12,10 +12,14 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from django.conf import settings
+from dotenv import find_dotenv, load_dotenv
+
+# Load environment variable files
+env_file = find_dotenv("../../.env")
+load_dotenv(env_file)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -25,6 +29,7 @@ SECRET_KEY = '6e_qi$a_w5rni$dl)!r-xq-h*=da6q3#4gs4k3%+p(bd42yrv+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+PYTHONUNBUFFERED = True
 
 ALLOWED_HOSTS = []
 
@@ -165,6 +170,12 @@ SPECTACULAR_SETTINGS = {
 #########################
 # DBS SPECIFIC SETTINGS #
 ###################"#####
-FILECOIN_SERVICE_URL = 'https://storage.filecoin.com'
+FILECOIN_SERVICE_URL = 'http://localhost:3000'
 ARWEAVE_SERVICE_URL = 'https://storage.arweave.com'
-DEFAULT_FILE_STORAGE = 'ipfs_storage.InterPlanetaryFileSystemStorage'
+
+TEST_PRIVATE_KEY = os.environ.get("TEST_PRIVATE_KEY")
+TOKEN_ADDRESS = os.environ.get("TOKEN_ADDRESS")
+
+if os.getenv('GITHUB_WORKFLOW'):
+    TEST_PRIVATE_KEY = os.getenv("TEST_PRIVATE_KEY")
+    TOKEN_ADDRESS = os.getenv("TOKEN_ADDRESS")

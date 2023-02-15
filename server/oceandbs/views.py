@@ -1,23 +1,26 @@
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-import requests
 import json
-from rest_framework import serializers
+import requests
 
-from rest_framework.parsers import JSONParser
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
+
+from rest_framework import serializers, parsers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, inline_serializer, OpenApiParameter
-from django.conf import settings
+
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
 
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, UPLOAD_CODE
 from .utils import check_params_validity
 
-
 # Storage service creation class 
 class StorageCreationView(APIView):
   write_serializer_class = CreateStorageSerializer
+  parser_classes = (parsers.JSONParser,)
 
   @csrf_exempt
   @extend_schema(
@@ -29,8 +32,8 @@ class StorageCreationView(APIView):
         value={
           "type": "filecoin",
           "description":  "File storage on FileCoin",
-          "url": "http://microservice.url",
-          "paymentMethods":[
+          "url": "http://localhost:3000/",
+          "payment":[
             {
               "chainId": "1",
               "acceptedTokens": [
@@ -68,7 +71,7 @@ class StorageCreationView(APIView):
     """
     POST a storage service, handling different error code
     """
-    data = JSONParser().parse(request)
+    data = request.data
 
     # Make sure request data contains type and files
     if (not 'type' in data):
@@ -81,7 +84,8 @@ class StorageCreationView(APIView):
       if storage:
         return Response('Chosen storage type already exists.', status=400)
     except:
-      for payment_method in data['paymentMethods']:
+      # print(data['payment'])
+      for payment_method in data['payment']:
         transit_table = []
         for token in payment_method['acceptedTokens']:
           accepted_token={}
@@ -114,7 +118,7 @@ class StorageListView(APIView):
         value=[{
             "type": "filecoin",
             "description": "File storage on FileCoin",
-            "paymentMethods": [
+            "payment": [
               {
                 "chainId": "1",
                 "acceptedTokens": [
@@ -158,6 +162,7 @@ class StorageListView(APIView):
 
 # Quote creation endpoint
 class QuoteCreationView(APIView):
+  parser_classes = (parsers.JSONParser,)
   @csrf_exempt
   @extend_schema(
     request=[],
@@ -166,19 +171,17 @@ class QuoteCreationView(APIView):
       OpenApiExample(
         "QuoteCreationRequestExample",
         value={
-          "type": "filecoin",
+          "type": "arweave",
           "files": [
-            {"length":2343545},
-            {"length":2343545}
+            {"length":234},
+            {"length":236}
           ],
-          "duration": 4353545453,
+          "duration": 123,
           "payment": {
-              "payment_method": {
-                "chainId": 1,
-              },
-              "wallet_address": "0xOCEAN_on_MAINNET"
+              "chainId": 80001,
+              "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
           },
-          "userAddress": "0x456"
+          "userAddress": "0xCC866199C810B216710A3F3714d35920C343a8CD"
         },
         request_only=True, # signal that example only applies to requests
         response_only=False
@@ -214,7 +217,7 @@ class QuoteCreationView(APIView):
     """
     POST a quote, handle different error code
     """
-    data = JSONParser().parse(request)
+    data = request.data
 
     # Make sure request data contains type and files
     if (not 'type' in data or not 'files' in data):
@@ -222,15 +225,17 @@ class QuoteCreationView(APIView):
 
     # From type, retrieve associated storage object
     try:
-      storage = Storage.objects.get(type=data.pop('type'))
+      storage = Storage.objects.get(type=data['type'])
       # If not exists, raise error
     except:
-      return Response('Chosen storage type does not exist.', status=400)
+      return Response({'error': 'Chosen storage type does not exist.'}, status=400)
 
     # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
+    headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
     response = requests.post(
       storage.url + 'getQuote/',
-      data
+      json.dumps(data),
+      headers=headers
     )
 
     # From the response data:
@@ -240,7 +245,8 @@ class QuoteCreationView(APIView):
 
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
-      data['payment']['paymentMethod'] = data['payment'].pop('payment_method')
+      data['payment']['paymentMethod'] = {'chainId': data['payment']['chainId']}
+      data['payment']['wallet_adress'] = data['payment']['tokenAddress'] 
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
@@ -253,7 +259,7 @@ class QuoteCreationView(APIView):
             'tokenAddress': serializer.data['tokenAddress']
           }, status=201)
       return Response(serializer.errors, status=400)
-    else: return Response('Storage service response badly formatted.', status=400)
+    else: return Response({'error': 'Storage service response badly formatted.'}, status=400)
 
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
@@ -265,7 +271,7 @@ class QuoteStatusView(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       )
     ],
     examples=[
@@ -300,7 +306,7 @@ class QuoteStatusView(APIView):
 
     # Request status of quote from micro-service
     response = requests.get(
-      quote.storage.url + 'quote/' + str(quoteId)
+      quote.storage.url  + 'getStatus?quoteId=' + str(quoteId)
     )
 
     if (response.status_code == 200):
@@ -311,7 +317,6 @@ class QuoteStatusView(APIView):
       'status': quote.status
     })
 
-# "/upload?quoteId=123565&nonce=1768214571&signature=0ee382b39a39e05500d99233cdca83cd9959be4ff557ce7f3f29c9ce99d3b5de"
 # Upload file associated with a quote endpoint
 class UploadFile(APIView):
   @csrf_exempt
@@ -320,7 +325,7 @@ class UploadFile(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       ),
       OpenApiParameter(
         name='nonce',
@@ -407,7 +412,38 @@ class UploadFile(APIView):
 
       # Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
       File.objects.create(quote=quote, **added_file)
-      files_reference.append(added_file['cid'])
+      files_reference.append("ipfs://" + str(added_file['cid']))
+
+    try:
+      rpcProvider = quote.payment.paymentMethod.rpcEndpointUrl
+    except ObjectDoesNotExist:
+      rpcProvider = "https://rpc-mumbai.maticvigil.com/"
+
+    my_provider = Web3.HTTPProvider(rpcProvider)
+    w3 = Web3(my_provider)
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    # Creating allowance for funds transfer from my user address to the quote paymentAddress
+    approvalAddress = quote.approveAddress # '0xAFcE990754C38Be5E0C341707B2A162C4e67547B'
+    tokenAddress = quote.tokenAddress # '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889'
+    userAddress = quote.payment.wallet_address #'0xCC866199C810B216710A3F3714d35920C343a8CD'
+    
+    abi = '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]'
+    abi = json.loads(abi)
+    
+    contractAddress = w3.toChecksumAddress(tokenAddress)
+    contract = w3.eth.contract(contractAddress, abi=abi)
+    
+    userAddress = w3.toChecksumAddress(userAddress)
+    approvalAddress = w3.toChecksumAddress(approvalAddress)
+    nonce = w3.eth.getTransactionCount(userAddress)
+    tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({'from': userAddress, 'nonce': nonce})
+    signed_tx = w3.eth.account.signTransaction(tx_hash, 'bbb5a2d50f3956e72dd8f38096270d8d951e44da623b1e31422d724e5841c93f')
+    tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    print("Transaction receipt:" + str(tx_receipt))
+    print("Contract allowance:" + str(contract.functions.allowance(userAddress, approvalAddress).call()))
 
     data = {
       "quoteId": quote.quoteId,
@@ -418,7 +454,7 @@ class UploadFile(APIView):
 
     # Upload files to micro-service
     response = requests.post(
-      quote.storage.url + 'upload/',
+      quote.storage.url + 'upload/?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0],
       data
     )
 
@@ -441,7 +477,7 @@ class QuoteLink(APIView):
       OpenApiParameter(
         name='quoteId',
         description='Quote ID',
-        type=int
+        type=str
       ),
       OpenApiParameter(
         name='nonce',
@@ -500,8 +536,20 @@ class QuoteLink(APIView):
       quote.storage.url + 'getLink?quoteId=' + str(quoteId) + '&nonce=' + params['nonce'][0] + '&signature=' + params['signature'][0]
     )
 
-    #TODO: improve that by managing the different link format from different services.
-    return Response({
-      "type": quote.storage.type,
-      "CID": json.loads(response.content)[0]['CID']
-    })
+    print(json.loads(response.content))
+    if response.status_code != 200:
+      return Response(json.loads(response.content), status=400)
+
+    if quote.storage.type == "arweave":
+      #TODO: improve that by managing the different link format from different services.
+      responseObj = json.loads(response.content)
+      # result = []
+      # for item in responseObj:
+      #   result.append({''})
+      return Response(responseObj, status=200)
+    elif quote.storage.type == "filecoin":
+      #TODO: improve that by managing the different link format from different services.
+      return Response({
+        "type": quote.storage.type,
+        "CID": json.loads(response.content)[0]['CID']
+      })
