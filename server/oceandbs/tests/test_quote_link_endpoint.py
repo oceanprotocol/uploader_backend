@@ -5,7 +5,6 @@ from rest_framework.test import APIRequestFactory, APIClient, APITestCase, Reque
 import responses
 from ..utils import generate_signature
 
-# Create your tests here.
 # Using the standard RequestFactory API to create a form POST request
 class TestLinkEndpoint(APITestCase):
   fixtures = ["storages.json"]
