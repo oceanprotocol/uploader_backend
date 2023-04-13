@@ -1,5 +1,6 @@
 import sys, getopt
-from ..utils import generate_signature
+sys.path.append('..')
+from utils import generate_signature
 
 def main(argv):
    quoteId = ''
@@ -25,8 +26,8 @@ def main(argv):
 
    signature = generate_signature(quoteId, nonce, pkey)
 
-   print("Signature:" + str(signature.signature))
-   print("Nonce:" + str(nonce))
+   print("Signature:", signature.signature.hex())
+   print("Nonce:", str(nonce))
 
 if __name__ == "__main__":
    main(sys.argv[1:])
