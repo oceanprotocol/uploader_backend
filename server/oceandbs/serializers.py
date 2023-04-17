@@ -65,6 +65,8 @@ class PaymentSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     payment_method_data = validated_data.pop('payment')
     payment = Payment.objects.create(**validated_data)
+
+    # We should target the intersection of the payment method and the quote storage
     for method in payment_method_data:
         PaymentMethod.objects.create(payment=payment, **method)
     return payment
@@ -93,7 +95,10 @@ class QuoteSerializer(serializers.ModelSerializer):
     method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
 
     payment_data['paymentMethod'] = method
-    Payment.objects.create(quote=quote, **payment_data)
+    payment = Payment.objects.create(quote=quote, **payment_data)
+
+    quote.payment = payment
+    quote.save()
 
     # Manage files save
     for file in files_data:

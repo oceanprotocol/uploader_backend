@@ -162,7 +162,6 @@ class StorageListView(APIView):
     List all available storages
     """
     storages = Storage.objects.filter(is_active=True)
-    print(storages)
     serializer = self.read_serializer_class(storages, many=True)
     return Response(serializer.data, status=200)
 
@@ -252,7 +251,8 @@ class QuoteCreationView(APIView):
       # Creating the new payment with status still to execute
       data['storage'] = storage.pk
       data['payment']['paymentMethod'] = {'chainId': data['payment']['chainId']}
-      data['payment']['wallet_adress'] = data['payment']['tokenAddress'] 
+      data['payment']['wallet_adress'] = data['payment']['tokenAddress']
+      data['status'] = UPLOAD_CODE[1][0]
 
       serializer = QuoteSerializer(data=data)
       if serializer.is_valid():
