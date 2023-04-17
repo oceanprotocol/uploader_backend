@@ -88,7 +88,7 @@ class QuoteSerializer(serializers.ModelSerializer):
     files_data = validated_data.pop('files')
     quote = Quote.objects.create(**validated_data)
 
-    # For payment method, check if it exits already. If so, associate it with the payment object instead of
+    # For payment method, check if it exists already. If so, associate it with the payment object instead of
     payment_method = payment_data['paymentMethod']
     method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
 

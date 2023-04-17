@@ -16,7 +16,7 @@ class TestQuoteStatusEndpoint(APITestCase):
     responses.get(
       url= 'https://filecoin.org/getStatus?quoteId=123565',
       json={
-        'status': 200
+        'status': 1
       },
       status=200
     )
@@ -27,4 +27,4 @@ class TestQuoteStatusEndpoint(APITestCase):
     # Assert content of the response itself, pure JSON
     self.assertEqual(len(response.data), 1)
 
-    self.assertEqual(response.data['status'], 200)
+    self.assertEqual(response.data['status'], 1)

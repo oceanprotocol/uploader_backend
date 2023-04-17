@@ -11,13 +11,13 @@ PAYMENT_STATUS = [
 ]
 
 UPLOAD_CODE = [
-  ('0', 'No such quote'),
-  ('1', 'Waiting for files to be uploaded'),
-  ('100', 'Processing payment'),
-  ('200', 'Processing payment failure modes'),
-  ('300', 'Uploading file to storage'),
-  ('400', 'Upload done'),
-  ('401', 'Upload failure modes'),
+  (0, 'No such quote'),
+  (1, 'Waiting for files to be uploaded'),
+  (100, 'Processing payment'),
+  (200, 'Processing payment failure modes'),
+  (300, 'Uploading file to storage'),
+  (400, 'Upload done'),
+  (401, 'Upload failure modes'),
 ]
 
 # Create your models here.
@@ -26,6 +26,7 @@ class Storage(models.Model):
   type = models.CharField(max_length=256, verbose_name=_("Storage type"))
   description= models.TextField(verbose_name = _("Storage description"), null=True, blank=True)
   url = models.URLField(max_length=2048, default="https://example.com")
+  is_active = models.BooleanField(default=True)
 
   def __str__(self):
     return self.type + " - " + self.description

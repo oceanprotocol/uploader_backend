@@ -82,7 +82,12 @@ class StorageCreationView(APIView):
     try:
       storage = Storage.objects.get(type=data['type'])
       if storage:
-        return Response('Chosen storage type already exists.', status=400)
+        if storage.is_active:
+          return Response('Chosen storage type already exists.', status=400)
+        else:
+          storage.is_active = True
+          storage.save()
+          return Response('Chosen storage type reactivated.', status=201)
     except:
       for payment_method in data['payment']:
         transit_table = []
@@ -156,7 +161,8 @@ class StorageListView(APIView):
     """
     List all available storages
     """
-    storages = Storage.objects.all()
+    storages = Storage.objects.filter(is_active=True)
+    print(storages)
     serializer = self.read_serializer_class(storages, many=True)
     return Response(serializer.data, status=200)
 
@@ -309,12 +315,19 @@ class QuoteStatusView(APIView):
       quote.storage.url  + 'getStatus?quoteId=' + str(quoteId)
     )
 
+    status_code = response.status_code
     if (response.status_code == 200):
+      responseStatus = json.loads(response.content)['status']
       quote.status = json.loads(response.content)['status']
       quote.save()
 
+    if (response.status_code == 406):
+      status_code = UPLOAD_CODE[6][0]
+      quote.status = UPLOAD_CODE[6][0]
+      quote.save()
+
     return Response({
-      'status': quote.status
+      "status": quote.status
     })
 
 # Upload file associated with a quote endpoint
@@ -416,7 +429,7 @@ class UploadFile(APIView):
 
     try:
       rpcProvider = quote.payment.paymentMethod.rpcEndpointUrl
-    except ObjectDoesNotExist:
+    except (ObjectDoesNotExist, AttributeError) as e:
       rpcProvider = "https://rpc-mumbai.maticvigil.com/"
 
     my_provider = Web3.HTTPProvider(rpcProvider)
