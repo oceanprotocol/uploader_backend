@@ -72,7 +72,7 @@ class Quote(models.Model):
   tokenAddress = models.CharField(max_length=256, null = True)
   approveAddress = models.CharField(max_length=256, null = True)
   tokenAmount = models.BigIntegerField(null = True)
-  status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
+  status = models.CharField(choices=UPLOAD_CODE, default=UPLOAD_CODE[1], null=True, blank=True, max_length=3)
   nonce = models.DateTimeField(default=nonce_computation())
   expiration = models.DateTimeField(default=expiration_date())
 

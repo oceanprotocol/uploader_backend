@@ -15,11 +15,9 @@ from web3.middleware import geth_poa_middleware
 
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
-from .utils import check_params_validity
+from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
 
 # Storage service creation class
-
-
 class StorageCreationView(APIView):
     write_serializer_class = CreateStorageSerializer
     parser_classes = (parsers.JSONParser,)
@@ -331,14 +329,11 @@ class QuoteStatusView(APIView):
             quote.storage.url + 'getStatus?quoteId=' + str(quoteId)
         )
 
-        status_code = response.status_code
-        if (response.status_code == 200):
-            responseStatus = json.loads(response.content)['status']
+        try:
             quote.status = json.loads(response.content)['status']
             quote.save()
-
-        if (response.status_code == 406):
-            status_code = UPLOAD_CODE[6][0]
+        except Exception as e:
+            print(e)
             quote.status = UPLOAD_CODE[6][0]
             quote.save()
 
@@ -347,8 +342,6 @@ class QuoteStatusView(APIView):
         })
 
 # Upload file associated with a quote endpoint
-
-
 class UploadFile(APIView):
     @csrf_exempt
     @extend_schema(
@@ -421,89 +414,29 @@ class UploadFile(APIView):
             return Response("No file sent alongside the request.", status=400)
 
         # Check upload status to see if files have not been already uploaded
-        if quote.status in [UPLOAD_CODE[4], UPLOAD_CODE[5]]:
+        if quote.status in [UPLOAD_CODE[4][0], UPLOAD_CODE[5][0]]:
             return Response("Files already uploaded.", status=400)
 
-        # Stating that files are currently uploading
+        # Update quote status to uploading
         quote.status = UPLOAD_CODE[4]
         quote.save()
 
-        # Forward the files to IPFS, retrieve whatever the hash they provide us, mocked in the test
-        files_reference = []
-        url = getattr(settings, 'IPFS_SERVICE_ENDPOINT',
-                      "http://127.0.0.1:5001/api/v0/add")
+        # Upload files to IPFS
+        files_reference = upload_files_to_ipfs(request.FILES, quote)
 
-        response = requests.post(url, files=request.FILES)
-        files = response.text.splitlines()
-        for file in files:
-            added_file = {}
-            json_version = json.loads(file)
-            added_file['title'] = json_version['Name']
-            added_file['cid'] = json_version['Hash']
-            added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
-
-            # Forward the files to IPFS, retrieve whatever they provide us (the hash), mocked in the test
-            File.objects.create(quote=quote, **added_file)
-            files_reference.append("ipfs://" + str(added_file['cid']))
-
-        try:
-            rpcProvider = quote.payment.paymentMethod.rpcEndpointUrl
-        except (ObjectDoesNotExist, AttributeError) as e:
-            rpcProvider = "https://rpc-mumbai.maticvigil.com/"
-
-        my_provider = Web3.HTTPProvider(rpcProvider)
-        w3 = Web3(my_provider)
-        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-        # Creating allowance for funds transfer from my user address to the quote paymentAddress
-        # '0xAFcE990754C38Be5E0C341707B2A162C4e67547B'
-        approvalAddress = quote.approveAddress
-        tokenAddress = quote.tokenAddress  # '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889'
-        # '0xCC866199C810B216710A3F3714d35920C343a8CD'
-        userAddress = quote.payment.wallet_address
-
-        abi = '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]'
-        abi = json.loads(abi)
-
-        contractAddress = w3.toChecksumAddress(tokenAddress)
-        contract = w3.eth.contract(contractAddress, abi=abi)
-
-        userAddress = w3.toChecksumAddress(userAddress)
-        approvalAddress = w3.toChecksumAddress(approvalAddress)
-        nonce = w3.eth.getTransactionCount(userAddress)
-        tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({
-            'from': userAddress, 'nonce': nonce})
-        signed_tx = w3.eth.account.signTransaction(
-            tx_hash, 'bbb5a2d50f3956e72dd8f38096270d8d951e44da623b1e31422d724e5841c93f')
-        tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-
-        tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print("Transaction receipt:" + str(tx_receipt))
-        print("Contract allowance:" +
-              str(contract.functions.allowance(userAddress, approvalAddress).call()))
-
-        data = {
-            "quoteId": quote.quoteId,
-            "nonce": params['nonce'][0],
-            "signature": params['signature'][0],
-            "files": files_reference
-        }
+        # Create allowance for funds transfer
+        create_allowance(quote, 'bbb5a2d50f3956e72dd8f38096270d8d951e44da623b1e31422d724e5841c93f')
 
         # Upload files to micro-service
-        response = requests.post(
-            quote.storage.url + 'upload/?quoteId=' +
-            str(quoteId) + '&nonce=' +
-            params['nonce'][0] + '&signature=' + params['signature'][0],
-            data
-        )
+        response = upload_files_to_microservice(quote, params, files_reference)
 
         if (response.status_code == 200):
-            quote.status = UPLOAD_CODE[5]
+            quote.status = UPLOAD_CODE[5][0]
             quote.save()
 
             return Response("File upload succeeded.", status=200)
 
-        quote.status = UPLOAD_CODE[6]
+        quote.status = UPLOAD_CODE[6][0]
         quote.save()
         return Response("Looks like something failed.", status=401)
 

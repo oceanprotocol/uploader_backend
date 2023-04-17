@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 from django.core.files import File
-from oceandbs.models import File as DBSFile, Quote
+from oceandbs.models import File as DBSFile, Quote, UPLOAD_CODE
 from ..utils import generate_signature
 import mock
 import responses
@@ -61,3 +61,4 @@ class TestFileUploadEndpoint(APITestCase):
     quote = Quote.objects.first()
     files = DBSFile.objects.filter(quote=quote)
     self.assertEqual(len(files), 2)
+    self.assertEqual(quote.status, str(UPLOAD_CODE[5][0]))
