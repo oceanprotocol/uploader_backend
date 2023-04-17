@@ -257,32 +257,32 @@ class QuoteCreationView(APIView):
             headers=headers
         )
 
-        # From the response data:
         if response and response.status_code == 200:
-            # Save the quote and cost/payment request
-            data = {**data, **json.loads(response.content)}
+            response_data = json.loads(response.content)
 
-            # Creating the new payment with status still to execute
             data['storage'] = storage.pk
+            data['status'] = UPLOAD_CODE[1][0]
             data['payment']['paymentMethod'] = {
                 'chainId': data['payment']['chainId']}
-            data['payment']['wallet_adress'] = data['payment']['tokenAddress']
-            data['status'] = UPLOAD_CODE[1][0]
+            data['payment']['wallet_address'] = data['payment']['tokenAddress']
+
+            data.update(response_data)
 
             serializer = QuoteSerializer(data=data)
             if serializer.is_valid():
-                serializer.save()
+                quote = serializer.save()
                 return Response({
-                    'quoteId': serializer.data['quoteId'],
-                    'tokenAmount': serializer.data['tokenAmount'],
-                    'approveAddress': serializer.data['approveAddress'],
+                    'quoteId': quote.quoteId,
+                    'tokenAmount': quote.tokenAmount,
+                    'approveAddress': quote.approveAddress,
                     'chainId': data['payment']['paymentMethod']['chainId'],
-                    'tokenAddress': serializer.data['tokenAddress']
+                    'tokenAddress': quote.tokenAddress
                 }, status=201)
-            return Response(serializer.errors, status=400)
+            else:
+                print(serializer.errors)
+                return Response(serializer.errors, status=400)
         else:
             return Response({'error': 'Storage service response badly formatted.'}, status=400)
-
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
 class QuoteStatusView(APIView):

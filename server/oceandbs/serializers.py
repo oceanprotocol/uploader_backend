@@ -1,51 +1,37 @@
 from rest_framework import serializers
 from .models import File, AcceptedToken, Quote, Storage, PaymentMethod, Payment, PAYMENT_STATUS, UPLOAD_CODE
 
-class CreateTokensSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = AcceptedToken
-    fields=['title', 'value']
 
-class CreatePaymentMethodSerializer(serializers.ModelSerializer):
-  acceptedTokens = CreateTokensSerializer(many=True)
-  class Meta:
-    model = PaymentMethod
-    fields=['chainId', 'acceptedTokens']
+class AcceptedTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcceptedToken
+        fields = ['title', 'value']
 
-class CreateStorageSerializer(serializers.ModelSerializer):
-  payment = CreatePaymentMethodSerializer(many=True)
-  class Meta:
-    model = Storage
-    fields = ['type', 'description', 'url', 'payment']
-
-  def create(self, validated_data):
-    payment_method_data = validated_data.pop('payment')
-    storage = Storage.objects.create(**validated_data)
-
-    for method in payment_method_data:
-      accepted_tokens_data = method.pop('acceptedTokens')
-      payment_method = PaymentMethod.objects.create(storage=storage, **method)
-      for accepted_token in accepted_tokens_data:
-        AcceptedToken.objects.create(paymentMethod=payment_method, **accepted_token)
-
-    return storage
-
-class TokensSerializer(serializers.ModelSerializer):
-  def to_representation(self, instance):
-    representation = super().to_representation(instance)
-    representation[instance.title] = instance.value
-
-    return representation
-  
-  class Meta:
-    model = AcceptedToken
-    fields=[]
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
-  acceptedTokens = TokensSerializer(many=True, read_only=True)
+    acceptedTokens = AcceptedTokenSerializer(many=True, required=False)
+
+    class Meta:
+        model = PaymentMethod
+        fields = ['chainId', 'acceptedTokens']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['acceptedTokens'] = [{"title": token.title, "value": token.value} for token in instance.acceptedTokens.all()]
+        return representation
+
+class PaymentSerializer(serializers.ModelSerializer):
+    paymentMethod = PaymentMethodSerializer()
+
+    class Meta:
+        model = Payment
+        fields = ['paymentMethod', 'wallet_address']
+
+
+class FileSerializer(serializers.ModelSerializer):
   class Meta:
-    model = PaymentMethod
-    fields=['chainId', 'acceptedTokens']
+    model = File
+    fields = ['length']
 
 
 class StorageSerializer(serializers.ModelSerializer):
@@ -55,53 +41,48 @@ class StorageSerializer(serializers.ModelSerializer):
     fields = ['type', 'description', 'payment']
 
 
-class PaymentSerializer(serializers.ModelSerializer):
-  paymentMethod = PaymentMethodSerializer()
+class CreateStorageSerializer(serializers.ModelSerializer):
+    payment = PaymentMethodSerializer(many=True)
 
-  class Meta:
-    model = Payment
-    fields = ['paymentMethod', 'wallet_address']
+    class Meta:
+        model = Storage
+        fields = ['type', 'description', 'url', 'payment']
 
-  def create(self, validated_data):
-    payment_method_data = validated_data.pop('payment')
-    payment = Payment.objects.create(**validated_data)
+    def create(self, validated_data):
+        payment_method_data = validated_data.pop('payment')
+        storage = Storage.objects.create(**validated_data)
 
-    # We should target the intersection of the payment method and the quote storage
-    for method in payment_method_data:
-        PaymentMethod.objects.create(payment=payment, **method)
-    return payment
+        for method_data in payment_method_data:
+            accepted_tokens_data = method_data.pop('acceptedTokens')
+            method = PaymentMethod.objects.create(storage=storage, **method_data)
+            for accepted_token_data in accepted_tokens_data:
+                AcceptedToken.objects.create(paymentMethod=method, **accepted_token_data)
 
-
-class FileSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = File
-    fields = ['length']
-
+        return storage
 
 class QuoteSerializer(serializers.ModelSerializer):
-  payment = PaymentSerializer()
-  files = FileSerializer(many=True)
-  class Meta:
-    model = Quote
-    fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'tokenAddress', 'approveAddress', 'status', 'files', 'payment']
+    payment = PaymentSerializer()
+    files = FileSerializer(many=True)
 
-  def create(self, validated_data):
-    payment_data = validated_data.pop('payment')
-    files_data = validated_data.pop('files')
-    quote = Quote.objects.create(**validated_data)
+    class Meta:
+        model = Quote
+        fields = ['storage', 'tokenAmount', 'quoteId', 'duration', 'tokenAddress', 'approveAddress', 'status', 'files', 'payment']
 
-    # For payment method, check if it exists already. If so, associate it with the payment object instead of
-    payment_method = payment_data['paymentMethod']
-    method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method)
+    def create(self, validated_data):
+        payment_data = validated_data.pop('payment')
+        files_data = validated_data.pop('files')
+        quote = Quote.objects.create(**validated_data)
 
-    payment_data['paymentMethod'] = method
-    payment = Payment.objects.create(quote=quote, **payment_data)
+        payment_method_data = payment_data.pop('paymentMethod')
+        method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method_data)
 
-    quote.payment = payment
-    quote.save()
+        payment_data['paymentMethod'] = method
+        payment = Payment.objects.create(quote=quote, **payment_data)
 
-    # Manage files save
-    for file in files_data:
-      File.objects.create(quote=quote, **file)
+        quote.payment = payment
+        quote.save()
 
-    return quote
+        for file_data in files_data:
+            File.objects.create(quote=quote, **file_data)
+
+        return quote
