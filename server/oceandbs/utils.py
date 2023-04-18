@@ -28,6 +28,8 @@ def upload_files_to_ipfs(request_files, quote):
         added_file['title'] = json_version['Name']
         added_file['cid'] = json_version['Hash']
         added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
+        print(json_version['Size'])
+        added_file['length'] = json_version['Size']
         File.objects.create(quote=quote, **added_file)
         files_reference.append("ipfs://" + str(added_file['cid']))
 
@@ -50,9 +52,11 @@ def create_allowance(quote, user_private_key):
     contractAddress = w3.toChecksumAddress(quote.tokenAddress)
     contract = w3.eth.contract(contractAddress, abi=abi)
 
-    userAddress = w3.toChecksumAddress(quote.payment.wallet_address)
+    userAddress = w3.toChecksumAddress(quote.payment.userAddress)
+    print("User address for payment", userAddress)
     approvalAddress = w3.toChecksumAddress(quote.approveAddress)
-    nonce = w3.eth.getTransactionCount(userAddress)
+    print("Approval address for payment", approvalAddress)
+    nonce = w3.eth.get_transaction_count(userAddress)
     tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({
         'from': userAddress, 'nonce': nonce})
     signed_tx = w3.eth.account.signTransaction(tx_hash, user_private_key)

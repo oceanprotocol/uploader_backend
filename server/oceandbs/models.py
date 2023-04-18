@@ -37,7 +37,7 @@ class Storage(models.Model):
 class PaymentMethod(models.Model):
   chainId = models.CharField(max_length=256)
   storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="payment")
-  rpcEndpointUrl = models.URLField(max_length=2048, default="https://example.com")
+  rpcEndpointUrl = models.URLField(max_length=2048, default="https://rpc-mumbai.maticvigil.com/")
 
   def __str__(self):
     return self.chainId + " - " + str(self.storage)
@@ -54,7 +54,8 @@ class AcceptedToken(models.Model):
 
 class Payment(models.Model):
   status = models.CharField(choices = PAYMENT_STATUS, default=PAYMENT_STATUS[0], max_length = 256)
-  wallet_address = models.CharField(max_length=256, null = True)
+  tokenAddress = models.CharField(max_length=256, null = True)
+  userAddress = models.CharField(max_length=256, null = True)
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="payments")
 
 def expiration_date():

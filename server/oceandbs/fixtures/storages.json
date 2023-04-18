@@ -67,7 +67,9 @@
     "pk": 1,
     "fields": {
       "paymentMethod": 1,
-      "wallet_address": "0xCC866199C810B216710A3F3714d35920C343a8CD"
+      "userAddress": "0xCC866199C810B216710A3F3714d35920C343a8CD",
+      "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
+
     }
   },
   {

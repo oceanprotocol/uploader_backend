@@ -2,7 +2,7 @@ from django.conf import settings
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 from rest_framework.utils import json
 import responses
-from oceandbs.models import File, Quote, Payment, PaymentMethod
+from oceandbs.models import File, Quote, Payment, PaymentMethod, UPLOAD_CODE
 
 # Using the standard RequestFactory API to create a form POST request
 class TestCreateQuoteEndpoint(APITestCase):
@@ -58,6 +58,15 @@ class TestCreateQuoteEndpoint(APITestCase):
 
     self.assertEqual(len(File.objects.all()), 2)
     self.assertEqual(len(Quote.objects.all()), 2)
+
+    new_quote = Quote.objects.get(quoteId=response.data['quoteId'])
+    self.assertEqual(new_quote.quoteId, response.data['quoteId'])
+    self.assertEqual(new_quote.storage.type, 'filecoin')
+    self.assertEqual(new_quote.tokenAmount, response.data['tokenAmount'])
+    self.assertEqual(new_quote.approveAddress, response.data['approveAddress'])
+    self.assertEqual(new_quote.payment.paymentMethod.chainId, str(response.data['chainId']))
+    self.assertEqual(new_quote.tokenAddress, response.data['tokenAddress'])
+    self.assertEqual(new_quote.status, str(UPLOAD_CODE[1][0]))
 
   @responses.activate
   def test_quote_creation_no_type(self):

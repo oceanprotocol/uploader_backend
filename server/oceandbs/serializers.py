@@ -25,7 +25,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ['paymentMethod', 'wallet_address']
+        fields = ['paymentMethod', 'userAddress', 'tokenAddress', 'status']
 
 
 class FileSerializer(serializers.ModelSerializer):

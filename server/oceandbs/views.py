@@ -189,10 +189,10 @@ class QuoteCreationView(APIView):
                 value={
                     "type": "arweave",
                     "files": [
-                      {"length": 234},
-                      {"length": 236}
+                      {"length": 31},
+                      {"length": 21}
                     ],
-                    "duration": 123,
+                    "duration": 12,
                     "payment": {
                         "chainId": 80001,
                         "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
@@ -262,7 +262,7 @@ class QuoteCreationView(APIView):
             data['status'] = UPLOAD_CODE[1][0]
             data['payment']['paymentMethod'] = {
                 'chainId': data['payment']['chainId']}
-            data['payment']['wallet_address'] = data['payment']['tokenAddress']
+            data['payment']['userAddress'] = data['userAddress']
 
             data.update(response_data)
 
