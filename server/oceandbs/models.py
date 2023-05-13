@@ -58,9 +58,6 @@ class Payment(models.Model):
   userAddress = models.CharField(max_length=256, null = True)
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="payments")
 
-def expiration_date():
-    return timezone.now() + timezone.timedelta(minutes=30)
-
 def nonce_computation():
     return timezone.now() - timezone.timedelta(days=7)
 
@@ -75,7 +72,6 @@ class Quote(models.Model):
   tokenAmount = models.BigIntegerField(null = True)
   status = models.CharField(choices=UPLOAD_CODE, default=UPLOAD_CODE[1], null=True, blank=True, max_length=3)
   nonce = models.DateTimeField(default=nonce_computation())
-  expiration = models.DateTimeField(default=expiration_date())
 
   def __str__(self):
     return str(self.storage) + " - " + self.tokenAddress

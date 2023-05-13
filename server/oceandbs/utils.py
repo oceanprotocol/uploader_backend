@@ -93,7 +93,7 @@ def check_params_validity(params, quote):
     return Response("Missing query parameters.", status=400)
 
   # Check expiration date of the quote vs current date
-  if quote.expiration < timezone.now():
+  if quote.created > timezone.now() + timezone.timedelta(minutes=30):
     return Response("Quote already expired, please create a new one.", status=400)
 
   # Check nonce
