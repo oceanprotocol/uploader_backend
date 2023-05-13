@@ -74,8 +74,7 @@ class QuoteSerializer(serializers.ModelSerializer):
         quote = Quote.objects.create(**validated_data)
 
         payment_method_data = payment_data.pop('paymentMethod')
-        method = PaymentMethod.objects.create(storage=validated_data['storage'], **payment_method_data)
-
+        method = PaymentMethod.objects.filter(storage=validated_data['storage'], chainId=payment_method_data['chainId']).first()
         payment_data['paymentMethod'] = method
         payment = Payment.objects.create(quote=quote, **payment_data)
 

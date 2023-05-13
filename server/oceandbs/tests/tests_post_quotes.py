@@ -17,25 +17,25 @@ class TestCreateQuoteEndpoint(APITestCase):
     body = {
       "type": "filecoin",
       "files": [
-        {"length":2343545},
-        {"length":2343545}
+        {"length":123},
+        {"length":123}
       ],
-      "duration": 4353545453,
+      "duration": 12,
       "payment": {
-          "chainId": 1,
-          "tokenAddress": "0xOCEAN_on_MAINNET"
+          "chainId": 80001,
+          "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
       },
-      "userAddress": "0x456"
+      "userAddress": "0xCC866199C810B216710A3F3714d35920C343a8CD"
     }
 
     responses.post(
       url= 'https://filecoin.org/getQuote/',
       json={
-        'tokenAmount': 500,
-        'approveAddress': '0x123',
-        'chainId': 1,
-        'tokenAddress': '0xOCEAN_on_MAINNET',
-        'quoteId': 'xxxx'
+        'tokenAmount': 16746036207,
+        'approveAddress': '0xAFcE990754C38Be5E0C341707B2A162C4e67547B',
+        'chainId': 80001,
+        'tokenAddress': '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
+        'quoteId': '892241ee78e1ff18ca514a475a55f8fb'
       },
       status=200
     )
@@ -67,6 +67,12 @@ class TestCreateQuoteEndpoint(APITestCase):
     self.assertEqual(new_quote.payment.paymentMethod.chainId, str(response.data['chainId']))
     self.assertEqual(new_quote.tokenAddress, response.data['tokenAddress'])
     self.assertEqual(new_quote.status, str(UPLOAD_CODE[1][0]))
+
+    # Ensure we are not creating duplicate payments objects
+    self.assertEqual(len(Payment.objects.all()), 2)
+
+    # Ensure we are not creating duplicate payment methods
+    self.assertEqual(len(PaymentMethod.objects.all()), 2)
 
   @responses.activate
   def test_quote_creation_no_type(self):
