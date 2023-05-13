@@ -94,7 +94,6 @@ class StorageCreationView(APIView):
         try:
             storage.full_clean()
         except ValidationError as e:
-            print(e)
             return Response('Invalid input data.', status=400)
 
         # Save the storage object to the database
@@ -277,7 +276,6 @@ class QuoteCreationView(APIView):
                     'tokenAddress': quote.tokenAddress
                 }, status=201)
             else:
-                print(serializer.errors)
                 return Response(serializer.errors, status=400)
         else:
             return Response({'error': 'Storage service response badly formatted.'}, status=400)
@@ -333,7 +331,6 @@ class QuoteStatusView(APIView):
             quote.status = json.loads(response.content)['status']
             quote.save()
         except Exception as e:
-            print(e)
             quote.status = UPLOAD_CODE[6][0]
             quote.save()
 
@@ -510,7 +507,6 @@ class QuoteLink(APIView):
             params['nonce'][0] + '&signature=' + params['signature'][0]
         )
 
-        print(json.loads(response.content))
         if response.status_code != 200:
             return Response(json.loads(response.content), status=400)
 

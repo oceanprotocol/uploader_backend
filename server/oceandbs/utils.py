@@ -28,7 +28,6 @@ def upload_files_to_ipfs(request_files, quote):
         added_file['title'] = json_version['Name']
         added_file['cid'] = json_version['Hash']
         added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
-        print(json_version['Size'])
         added_file['length'] = json_version['Size']
         File.objects.create(quote=quote, **added_file)
         files_reference.append("ipfs://" + str(added_file['cid']))
@@ -43,9 +42,7 @@ def create_allowance(quote, user_private_key):
         rpcProvider = "https://rpc-mumbai.maticvigil.com"
 
     my_provider = Web3.HTTPProvider(rpcProvider)
-    print("my_provider: ", my_provider)
     w3 = Web3(my_provider)
-    print("w3.isConnected(): ", w3.isConnected())
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     abi = '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]'
@@ -55,9 +52,7 @@ def create_allowance(quote, user_private_key):
     contract = w3.eth.contract(contractAddress, abi=abi)
 
     userAddress = w3.toChecksumAddress(quote.payment.userAddress)
-    print("User address for payment", userAddress)
     approvalAddress = w3.toChecksumAddress(quote.approveAddress)
-    print("Approval address for payment", approvalAddress)
     nonce = w3.eth.get_transaction_count(userAddress)
     tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({
         'from': userAddress, 'nonce': nonce})
@@ -65,9 +60,6 @@ def create_allowance(quote, user_private_key):
     tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
 
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    print("Transaction receipt:" + str(tx_receipt))
-    print("Contract allowance:" +
-          str(contract.functions.allowance(userAddress, approvalAddress).call()))
 
 # This function is used to upload the files to the target microservice
 def upload_files_to_microservice(quote, params, files_reference):
