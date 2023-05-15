@@ -422,7 +422,7 @@ class UploadFile(APIView):
         files_reference = upload_files_to_ipfs(request.FILES, quote)
 
         # Create allowance for funds transfer
-        create_allowance(quote, 'bbb5a2d50f3956e72dd8f38096270d8d951e44da623b1e31422d724e5841c93f')
+        create_allowance(quote, getattr(settings, 'TEST_PRIVATE_KEY', '0000000000000000000000000000000000000000000000000000000000000000'))
 
         # Upload files to micro-service
         response = upload_files_to_microservice(quote, params, files_reference)

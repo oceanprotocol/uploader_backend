@@ -32,6 +32,7 @@ jobs:
         python server/manage.py migrate
     - name: Run Tests
       env:
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         TEST_PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
         TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
       run: |

@@ -173,6 +173,7 @@ SPECTACULAR_SETTINGS = {
 FILECOIN_SERVICE_URL = 'http://localhost:3000'
 ARWEAVE_SERVICE_URL = 'https://storage.arweave.com'
 
+PRIVATE_KEY = os.environ.get("PRIVATE_KEY")
 TEST_PRIVATE_KEY = os.environ.get("TEST_PRIVATE_KEY")
 TOKEN_ADDRESS = os.environ.get("TOKEN_ADDRESS")
 
