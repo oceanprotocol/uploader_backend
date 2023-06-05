@@ -188,10 +188,10 @@ class QuoteCreationView(APIView):
                 value={
                     "type": "arweave",
                     "files": [
-                      {"length": 31},
-                      {"length": 21}
+                      {"length": 2},
+                      {"length": 2}
                     ],
-                    "duration": 12,
+                    "duration": 1234,
                     "payment": {
                         "chainId": 80001,
                         "tokenAddress": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
