@@ -24,6 +24,11 @@ You can create a superuser with `./manage.py createsuperuser` to be able to acce
 ## Usage
 You can navigate the API using the url `http://myserver.com/docs/` (Swagger based OpenAPI documentation, default on localhost:8000).
 
+## ENVS
+
+- DEBUG = False  (if we should enable debug mode in django)
+- SECRET_KEY = secret key for django
+
 # Dockerfile usage
 You can also just build the available Dockerfile and run the server from there using the following commands:
 
