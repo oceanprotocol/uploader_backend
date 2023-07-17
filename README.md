@@ -34,7 +34,7 @@ You can also just build the available Dockerfile and run the server from there u
 
 ```sh
 docker build -t ocean-dbs .
-docker run -p 8000:8000 ocean-dbs
+docker compose up
 ```
 
 ## Support
