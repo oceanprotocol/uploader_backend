@@ -14,5 +14,6 @@ COPY . /usr/src/app
 WORKDIR /usr/src/app/server
 RUN python manage.py migrate
 EXPOSE 8000
-
-CMD ["python", "-u", "manage.py", "runserver", "0.0.0.0:8000"]
+ENV DEBUG=False
+ENV SECRET_KEY='xx'
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
