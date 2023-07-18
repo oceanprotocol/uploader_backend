@@ -33,7 +33,14 @@ You can navigate the API using the url `http://myserver.com/docs/` (Swagger base
 You can also just build the available Dockerfile and run the server from there using the following commands:
 
 ```sh
+git submodule init
+git submodule update
 docker build -t ocean-dbs .
+```
+
+Then you copy/paste the content of .env.example into .env (at the root of the project, and validate that everything is fine by running:
+
+```sh
 docker compose up
 ```
 
@@ -54,6 +61,6 @@ Thanks to the $OCEAN community for the funding and the $OCEAN core team for the 
 ## License
 This project is delivered under an Apache License
 
-## Additional projects
+## Associated projects
  - DBS Filecoin microservice (https://github.com/oceanprotocol/dbs_filecoin)
  - DBS Arweave microservice (https://github.com/oceanprotocol/dbs_arweave)
