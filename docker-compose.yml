@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   dbs:
+    container_name: ${APP_NAME}_dbs
     build: .
     network_mode: host
     environment:
@@ -8,6 +9,10 @@ services:
       - DJANGO_LOG_LEVEL=DEBUG=value
     volumes:
       - .:/usr/src/app
+    command:
+      - /bin/sh
+      - '-c'
+      - '/usr/src/app/server/docker-entrypoint.sh'
   mariadb:
     container_name: ${APP_NAME}_mariadb
     image: mariadb
@@ -27,7 +32,7 @@ services:
     #   - ./mounts/mariadb:/var/lib/mariadb
     network_mode: host
   dbs_filecoin:
-    container_name: filecoin
+    container_name: ${APP_NAME}_filecoin
     build: ./services/dbs_filecoin/
     env_file: .env # Used to provide the filecoin env variables
     depends_on:
@@ -35,7 +40,7 @@ services:
         condition: service_healthy
     network_mode: host
   dbs_arweave:
-    container_name: arweave
+    container_name: ${APP_NAME}_arweave
     build: ./services/dbs_arweave/
     env_file: .env
     network_mode: host
