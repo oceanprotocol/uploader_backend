@@ -11,13 +11,13 @@ PAYMENT_STATUS = [
 ]
 
 UPLOAD_CODE = [
-  ('0', 'No such quote'),
-  ('1', 'Waiting for files to be uploaded'),
-  ('100', 'Processing payment'),
-  ('200', 'Processing payment failure modes'),
-  ('300', 'Uploading file to storage'),
-  ('400', 'Upload done'),
-  ('401', 'Upload failure modes'),
+  (0, 'No such quote'),
+  (1, 'Waiting for files to be uploaded'),
+  (100, 'Processing payment'),
+  (200, 'Processing payment failure modes'),
+  (300, 'Uploading file to storage'),
+  (400, 'Upload done'),
+  (401, 'Upload failure modes'),
 ]
 
 # Create your models here.
@@ -26,6 +26,7 @@ class Storage(models.Model):
   type = models.CharField(max_length=256, verbose_name=_("Storage type"))
   description= models.TextField(verbose_name = _("Storage description"), null=True, blank=True)
   url = models.URLField(max_length=2048, default="https://example.com")
+  is_active = models.BooleanField(default=True)
 
   def __str__(self):
     return self.type + " - " + self.description
@@ -35,7 +36,8 @@ class Storage(models.Model):
 
 class PaymentMethod(models.Model):
   chainId = models.CharField(max_length=256)
-  storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="paymentMethods")
+  storage = models.ForeignKey(Storage, null=True, on_delete=models.CASCADE, related_name="payment")
+  rpcEndpointUrl = models.URLField(max_length=2048, default="https://rpc-mumbai.maticvigil.com/")
 
   def __str__(self):
     return self.chainId + " - " + str(self.storage)
@@ -52,11 +54,9 @@ class AcceptedToken(models.Model):
 
 class Payment(models.Model):
   status = models.CharField(choices = PAYMENT_STATUS, default=PAYMENT_STATUS[0], max_length = 256)
-  wallet_address = models.CharField(max_length=256, null = True)
+  tokenAddress = models.CharField(max_length=256, null = True)
+  userAddress = models.CharField(max_length=256, null = True)
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="payments")
-
-def expiration_date():
-    return timezone.now() + timezone.timedelta(minutes=30)
 
 def nonce_computation():
     return timezone.now() - timezone.timedelta(days=7)
@@ -70,9 +70,8 @@ class Quote(models.Model):
   tokenAddress = models.CharField(max_length=256, null = True)
   approveAddress = models.CharField(max_length=256, null = True)
   tokenAmount = models.BigIntegerField(null = True)
-  status = models.CharField(choices=UPLOAD_CODE, null=True, blank=True, max_length=256)
+  status = models.CharField(choices=UPLOAD_CODE, default=UPLOAD_CODE[1], null=True, blank=True, max_length=3)
   nonce = models.DateTimeField(default=nonce_computation())
-  expiration = models.DateTimeField(default=expiration_date())
 
   def __str__(self):
     return str(self.storage) + " - " + self.tokenAddress

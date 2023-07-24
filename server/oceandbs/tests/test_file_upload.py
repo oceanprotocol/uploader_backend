@@ -1,14 +1,11 @@
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 from django.core.files import File
-from oceandbs.models import File as DBSFile, Quote
-from pathlib import Path
-import tempfile
+from oceandbs.models import File as DBSFile, Quote, UPLOAD_CODE
+from ..utils import generate_signature
 import mock
-import json
-import random
-from django.utils.encoding import force_str
 import responses
+from django.conf import settings
 
 image_mock = mock.MagicMock(spec=File)
 image_mock.name = 'image.png'
@@ -27,6 +24,9 @@ class TestFileUploadEndpoint(APITestCase):
 
   @responses.activate
   def test_file_upload(self):
+    signature = generate_signature(123565, 1768214571, getattr(settings, 'TEST_PRIVATE_KEY', ''))
+    responses.add_passthru('https://rpc-mumbai.maticvigil.com/')
+    
     # Mock call to IPFS for temporary file storage
     responses.post(
       url= 'http://127.0.0.1:5001/api/v0/add',
@@ -41,7 +41,7 @@ class TestFileUploadEndpoint(APITestCase):
     )
 
     response = self.client.post(
-      '/upload?quoteId=123565&nonce=1768214571&signature=0ee382b39a39e05500d99233cdca83cd9959be4ff557ce7f3f29c9ce99d3b5de',
+      '/upload?quoteId=123565&nonce=1768214571&signature=' + str(signature.signature.hex()),
       {'file1':image_mock, 'file2':image2_mock},
       format="multipart"
     )
@@ -61,3 +61,4 @@ class TestFileUploadEndpoint(APITestCase):
     quote = Quote.objects.first()
     files = DBSFile.objects.filter(quote=quote)
     self.assertEqual(len(files), 2)
+    self.assertEqual(quote.status, str(UPLOAD_CODE[5][0]))
