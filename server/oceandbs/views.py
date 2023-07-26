@@ -75,13 +75,14 @@ class StorageCreationView(APIView):
         data = request.data
 
         if not data.get('type'):
+            print("Error: Type key missing or None in request data.")
             return Response("Invalid input data.", status=400)
 
         storage, created = Storage.objects.get_or_create(type=data['type'])
 
         if not created:
             if storage.is_active:
-                return Response('Chosen storage type already exists.', status=400)
+                 return Response('Chosen storage type is already active and registered.', status=200)
             else:
                 storage.is_active = True
                 storage.save()
@@ -95,6 +96,7 @@ class StorageCreationView(APIView):
         try:
             storage.full_clean()
         except ValidationError as e:
+            print("Validation Error:", e)
             return Response('Invalid input data.', status=400)
 
         # Save the storage object to the database
