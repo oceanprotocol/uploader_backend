@@ -4,6 +4,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -278,7 +279,12 @@ class QuoteCreationView(APIView):
             else:
                 return Response(serializer.errors, status=400)
         else:
-            return Response({'error': 'Storage service response badly formatted.'}, status=400)
+            try:
+                return Response(response, status=400)
+            except Exception as e:
+                return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
 class QuoteStatusView(APIView):
