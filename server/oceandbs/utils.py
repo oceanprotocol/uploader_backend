@@ -19,6 +19,7 @@ from .models import File
 def upload_files_to_ipfs(request_files, quote):
     files_reference = []
     url = getattr(settings, 'IPFS_SERVICE_ENDPOINT', "http://127.0.0.1:5001/api/v0/add")
+    print('IPFS URL: ', url)
 
     response = requests.post(url, files=request_files)
     files = response.text.splitlines()
@@ -39,26 +40,38 @@ def create_allowance(quote, user_private_key, abi):
     try:
         rpcProvider = quote.payment.paymentMethod.rpcEndpointUrl
     except (ObjectDoesNotExist, AttributeError) as e:
+        print("RPC endpoint not found, using default one.", e)
         rpcProvider = "https://rpc-mumbai.maticvigil.com"
 
-    my_provider = Web3.HTTPProvider(rpcProvider)
-    w3 = Web3(my_provider)
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    try:
+        my_provider = Web3.HTTPProvider(rpcProvider)
+        w3 = Web3(my_provider)
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    abi = json.loads(abi)
+        abi = json.loads(abi)
 
-    contractAddress = w3.toChecksumAddress(quote.tokenAddress)
-    contract = w3.eth.contract(contractAddress, abi=abi)
+        contractAddress = w3.toChecksumAddress(quote.tokenAddress)
+        contract = w3.eth.contract(contractAddress, abi=abi)
 
-    userAddress = w3.toChecksumAddress(quote.payment.userAddress)
-    approvalAddress = w3.toChecksumAddress(quote.approveAddress)
-    nonce = w3.eth.get_transaction_count(userAddress)
-    tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({
-        'from': userAddress, 'nonce': nonce})
-    signed_tx = w3.eth.account.signTransaction(tx_hash, user_private_key)
-    tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        userAddress = w3.toChecksumAddress(quote.payment.userAddress)
+        approvalAddress = w3.toChecksumAddress(quote.approveAddress)
+        nonce = w3.eth.get_transaction_count(userAddress)
+        tx_hash = contract.functions.approve(approvalAddress, quote.tokenAmount).buildTransaction({
+            'from': userAddress, 'nonce': nonce})
+        signed_tx = w3.eth.account.signTransaction(tx_hash, user_private_key)
+        tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
 
-    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    except ValueError as e: # specific to Web3
+        print(f"Web3 ValueError: {e}")
+        return Response(f"Web3 Error: {e}", status=400)
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return Response(f"Unexpected error: {e}", status=500)
+    
+    return Response("Transaction completed successfully.", status=200)
 
 # This function is used to upload the files to the target microservice
 def upload_files_to_microservice(quote, params, files_reference):

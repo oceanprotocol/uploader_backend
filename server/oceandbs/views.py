@@ -68,21 +68,23 @@ class StorageCreationView(APIView):
             400: OpenApiResponse(description='Invalid input data.'),
         }
     )
+    
     def post(self, request):
         """
-        POST a storage service, handling different error code
+        POST a storage service, handling different error codes
         """
         data = request.data
+        print(f"Received registration request data: {data}")
 
         if not data.get('type'):
-            print("Error: Type key missing or None in request data.")
+            print("Type key missing or None in request data.")
             return Response("Invalid input data.", status=400)
 
         storage, created = Storage.objects.get_or_create(type=data['type'])
 
         if not created:
             if storage.is_active:
-                 return Response('Chosen storage type is already active and registered.', status=200)
+                return Response('Chosen storage type is already active and registered.', status=200)
             else:
                 storage.is_active = True
                 storage.save()
@@ -96,8 +98,8 @@ class StorageCreationView(APIView):
         try:
             storage.full_clean()
         except ValidationError as e:
-            print("Validation Error:", e)
-            return Response('Invalid input data.', status=400)
+            print(f"Validation Error: {e}")
+            return Response(str(e), status=400)
 
         # Save the storage object to the database
         storage.save()
@@ -113,7 +115,7 @@ class StorageCreationView(APIView):
                 accepted_token = AcceptedToken(
                     paymentMethod=payment_method, title=token_title, value=token_value)
                 accepted_token.save()
-
+            
         return Response('Desired storage created.', status=201)
 
 # Storage service listing class
@@ -236,9 +238,11 @@ class QuoteCreationView(APIView):
         POST a quote, handle different error code
         """
         data = request.data
+        print('data: ', data)
 
         # Make sure request data contains type and files
         if (not 'type' in data or not 'files' in data):
+            print("Error: Type or files key missing in request data.")
             return Response("Invalid input data.", status=400)
 
         # From type, retrieve associated storage object
@@ -282,6 +286,7 @@ class QuoteCreationView(APIView):
                 return Response(serializer.errors, status=400)
         else:
             try:
+                print('response: ', response)
                 return Response(response, status=400)
             except Exception as e:
                 return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
@@ -424,30 +429,49 @@ class UploadFile(APIView):
 
         # Update quote status to uploading
         quote.status = UPLOAD_CODE[4]
-        quote.save()
+        try:
+            quote.save()
+        except Exception as e:
+            return Response(f"Error updating quote status: {str(e)}", status=500)
 
+        try:
         # Upload files to IPFS
-        files_reference = upload_files_to_ipfs(request.FILES, quote)
+            files_reference = upload_files_to_ipfs(request.FILES, quote)
+        except Exception as e:
+            return Response(f"Error uploading to IPFS: {str(e)}", status=500)
 
         # Create allowance for funds transfer
-        create_allowance(
-            quote,
-            getattr(settings, 'TEST_PRIVATE_KEY', '0000000000000000000000000000000000000000000000000000000000000000'),
-            getattr(settings, 'TEST_ABI', '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]')
-        )
+        try:
+            create_allowance(
+                quote,
+                getattr(settings, 'PRIVATE_KEY', '0000000000000000000000000000000000000000000000000000000000000000'),
+                getattr(settings, 'TEST_ABI', '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]')
+            )
+        except Exception as e:
+            return Response(f"Error creating allowance: {str(e)}", status=500)
+
 
         # Upload files to micro-service
-        response = upload_files_to_microservice(quote, params, files_reference)
+        try:
+            response = upload_files_to_microservice(quote, params, files_reference)
+        except Exception as e:
+            return Response(f"Error uploading to micro-service: {str(e)}", status=500)
 
         if (response.status_code == 200):
             quote.status = UPLOAD_CODE[5][0]
-            quote.save()
-
+            try:
+                quote.save()
+            except Exception as e:
+                return Response(f"Error saving quote after successful upload: {str(e)}", status=500)
             return Response("File upload succeeded.", status=200)
 
         quote.status = UPLOAD_CODE[6][0]
-        quote.save()
-        return Response("Looks like something failed.", status=401)
+        try:
+            quote.save()
+        except Exception as e:
+            return Response(f"Error updating quote status after failed upload: {str(e)}", status=500)
+    
+        return Response(f"Microservice upload failed with status code: {response.status_code}", status=401)
 
 
 class QuoteLink(APIView):
