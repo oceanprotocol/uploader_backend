@@ -458,20 +458,24 @@ class UploadFile(APIView):
             return Response(f"Error uploading to micro-service: {str(e)}", status=500)
 
         if (response.status_code == 200):
+            print("File upload to microservice succeeded.")
             quote.status = UPLOAD_CODE[5][0]
             try:
                 quote.save()
             except Exception as e:
                 return Response(f"Error saving quote after successful upload: {str(e)}", status=500)
             return Response("File upload succeeded.", status=200)
+        
+        else:
+            print(f"Microservice upload failed with status code: {response.status_code}. Error message: {response.content}")
+            quote.status = UPLOAD_CODE[6][0]
+            try:
+                quote.save()
+            except Exception as e:
+                return Response(f"Error updating quote status after failed upload: {str(e)}", status=500)
 
-        quote.status = UPLOAD_CODE[6][0]
-        try:
-            quote.save()
-        except Exception as e:
-            return Response(f"Error updating quote status after failed upload: {str(e)}", status=500)
-    
-        return Response(f"Microservice upload failed with status code: {response.status_code}", status=401)
+            return Response(f"Microservice upload failed with status code: {response.status_code}", status=401)
+
 
 
 class QuoteLink(APIView):

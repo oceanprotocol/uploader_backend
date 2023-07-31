@@ -12,6 +12,7 @@ from web3.auto import w3
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_account.messages import encode_defunct
+from requests.exceptions import RequestException
 
 from .models import File
 
@@ -93,10 +94,20 @@ def create_allowance(quote, user_private_key, abi):
         print(f"Unexpected error: {e}")
         return Response(f"Unexpected error: {e}", status=500)
     
+    print(f"Transaction completed successfully")
     return Response("Transaction completed successfully.", status=200)
+
 
 # This function is used to upload the files to the target microservice
 def upload_files_to_microservice(quote, params, files_reference):
+    
+    # Initial data validations
+    if not quote or not hasattr(quote, 'storage') or not hasattr(quote.storage, 'url') or not hasattr(quote, 'quoteId'):
+        raise ValueError("Invalid quote object provided.")
+    
+    if not params or 'nonce' not in params or 'signature' not in params:
+        raise ValueError("Invalid params provided.")
+    
     data = {
         "quoteId": quote.quoteId,
         "nonce": params['nonce'][0],
@@ -104,12 +115,18 @@ def upload_files_to_microservice(quote, params, files_reference):
         "files": files_reference
     }
 
-    response = requests.post(
-        quote.storage.url + 'upload/?quoteId=' +
-        str(quote.quoteId) + '&nonce=' +
-        data['nonce'] + '&signature=' + data['signature'],
-        data
-    )
+    url = quote.storage.url + 'upload/?quoteId=' + str(quote.quoteId) + '&nonce=' + data['nonce'] + '&signature=' + data['signature']
+
+    try:
+        print(f"Sending request to microservice url: {url}")
+        response = requests.post(url, data)
+        response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
+    except RequestException as e:
+    # Extract more detailed message from the response content, if available
+        detailed_message = e.response.text if hasattr(e, 'response') and hasattr(e.response, 'text') else "No detailed message provided."
+        raise RuntimeError(f"Error occurred while making the request: {str(e)}. Detailed message: {detailed_message}")
+    except Exception as e:  # Catches any unforeseen exceptions
+        raise RuntimeError(f"Unexpected error occurred: {str(e)}")
 
     return response
 
