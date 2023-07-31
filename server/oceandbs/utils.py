@@ -15,23 +15,34 @@ from eth_account.messages import encode_defunct
 
 from .models import File
 
-# This function is used to upload the files temporary to IPFS
+# This function is used to upload the files temporarily to IPFS
 def upload_files_to_ipfs(request_files, quote):
     files_reference = []
-    url = getattr(settings, 'IPFS_SERVICE_ENDPOINT', "http://127.0.0.1:5001/api/v0/add")
+    url = getattr(settings, 'IPFS_SERVICE_ENDPOINT') or "http://127.0.0.1:5001/api/v0/add"
     print('IPFS URL: ', url)
 
-    response = requests.post(url, files=request_files)
-    files = response.text.splitlines()
-    for file in files:
-        added_file = {}
-        json_version = json.loads(file)
-        added_file['title'] = json_version['Name']
-        added_file['cid'] = json_version['Hash']
-        added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
-        added_file['length'] = json_version['Size']
-        File.objects.create(quote=quote, **added_file)
-        files_reference.append("ipfs://" + str(added_file['cid']))
+    try:
+        response = requests.post(url, files=request_files)
+        response.raise_for_status()  # This will raise an error for HTTP error responses
+        
+        files = response.text.splitlines()
+        for file in files:
+            added_file = {}
+            json_version = json.loads(file)
+            added_file['title'] = json_version['Name']
+            added_file['cid'] = json_version['Hash']
+            added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
+            added_file['length'] = json_version['Size']
+            File.objects.create(quote=quote, **added_file)
+            files_reference.append("ipfs://" + str(added_file['cid']))
+
+    except requests.RequestException as e:
+        print(f"HTTP error uploading to IPFS: {e}")
+        raise ValueError(f"HTTP error uploading to IPFS: {e}")
+
+    except Exception as e:
+        print(f"Error processing the uploaded files: {e}")
+        raise ValueError(f"Error processing the uploaded files: {e}")
 
     return files_reference
 
