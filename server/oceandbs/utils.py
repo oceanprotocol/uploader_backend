@@ -48,6 +48,17 @@ def upload_files_to_ipfs(request_files, quote):
 
 # The function below is used to generate an allowance for the file upload
 def create_allowance(quote, user_private_key, abi):
+    if not all([quote, user_private_key, abi]):
+        missing_args = []
+        if not quote:
+            missing_args.append("quote")
+        if not user_private_key:
+            missing_args.append("user_private_key")
+        if not abi:
+            missing_args.append("abi")
+        print(f"Missing or null arguments: {', '.join(missing_args)}")
+        return Response(f"Error: Missing or null arguments: {', '.join(missing_args)}", status=400)
+    
     try:
         rpcProvider = quote.payment.paymentMethod.rpcEndpointUrl
     except (ObjectDoesNotExist, AttributeError) as e:
