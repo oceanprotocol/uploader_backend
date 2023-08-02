@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from urllib.parse import urljoin
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -255,8 +256,9 @@ class QuoteCreationView(APIView):
         # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
         headers = {'User-Agent': 'Mozilla/5.0',
                    'Content-Type': 'application/json'}
+        get_quote_url = urljoin(storage.url, 'getQuote')
         response = requests.post(
-            storage.url + 'getQuote/',
+            get_quote_url,
             json.dumps(data),
             headers=headers
         )
@@ -336,8 +338,10 @@ class QuoteStatusView(APIView):
             return Response('Quote does not exist.', status=404)
 
         # Request status of quote from micro-service
+        get_status_endpoint = f'getStatus?quoteId={quoteId}'
+        get_status_url = urljoin(quote.storage.url, get_status_endpoint)
         response = requests.get(
-            quote.storage.url + 'getStatus?quoteId=' + str(quoteId)
+            get_status_url
         )
 
         try:
@@ -540,12 +544,19 @@ class QuoteLink(APIView):
         """
     Retrieve the quote documents links from the associated micro-service
     """
+        
+        # Construct the URL using urljoin
+        get_link_url = urljoin(quote.storage.url, 'getLink')
+
+        # Use the params argument to handle query parameters
+        query_parameters = {
+            'quoteId': str(quoteId),
+            'nonce': params['nonce'][0],
+            'signature': params['signature'][0]
+        }
+        
         # Request status of quote from micro-service
-        response = requests.get(
-            quote.storage.url + 'getLink?quoteId=' +
-            str(quoteId) + '&nonce=' +
-            params['nonce'][0] + '&signature=' + params['signature'][0]
-        )
+        response = requests.get(get_link_url, params=query_parameters)
 
         if response.status_code != 200:
             return Response(json.loads(response.content), status=400)
