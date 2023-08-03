@@ -7,7 +7,7 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  build:
+  TESTS:
 
     runs-on: ubuntu-latest
     strategy:
@@ -38,6 +38,10 @@ jobs:
         PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         TEST_PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
         TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: ${{ secrets.DEBUG }}
+        IPFS_SERVICE_ENDPOINT: ${{ secrets.IPFS_SERVICE_ENDPOINT }}
       run: |
         cd server
         python manage.py test
+  
