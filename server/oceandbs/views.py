@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -18,6 +18,7 @@ from web3.middleware import geth_poa_middleware
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
 from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
+
 
 # Storage service creation class
 class StorageCreationView(APIView):
@@ -252,16 +253,49 @@ class QuoteCreationView(APIView):
             # If not exists, raise error
         except:
             return Response({'error': 'Chosen storage type does not exist.'}, status=400)
+        
+        response = None 
 
-        # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
-        headers = {'User-Agent': 'Mozilla/5.0',
-                   'Content-Type': 'application/json'}
-        get_quote_url = urljoin(storage.url, 'getQuote')
-        response = requests.post(
-            get_quote_url,
-            json.dumps(data),
-            headers=headers
-        )
+        try:
+            # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
+            headers = {'User-Agent': 'Mozilla/5.0',
+                    'Content-Type': 'application/json'}
+
+            get_quote_url = urljoin(storage.url, 'getQuote')
+            print(f"Preparing to make request to URL: {get_quote_url}")
+            parsed_url = urlparse(get_quote_url)
+            print(f"Using port: {parsed_url.port or 'default port (80 or 443)'}")
+
+
+            # Log the data being sent for troubleshooting
+            print(f"Data being sent: {json.dumps(data)}")
+            print(f"Headers being sent: {headers}")
+
+            response = requests.post(
+                get_quote_url,
+                json.dumps(data),
+                headers=headers,
+                timeout=10  # Set a timeout to avoid indefinite waiting
+            )
+
+            # If the request was successful, log the response content
+            if response.status_code == 200:
+                print(f"Request to {get_quote_url} was successful.")
+                print(f"Response received: {response.text}")
+            else:
+                print(f"Received {response.status_code} status code from {get_quote_url} with response: {response.text}")
+
+        except requests.Timeout:
+            print(f"Request to {get_quote_url} timed out.")
+
+        except requests.RequestException as e:
+            print(f"An error occurred while making a request to {get_quote_url}. Error: {e}")
+
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+        if response is None:
+            print("No response was obtained from the API call.")
 
         if response and response.status_code == 200:
             response_data = json.loads(response.content)
