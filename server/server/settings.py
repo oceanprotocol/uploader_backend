@@ -88,7 +88,7 @@ if settings.DEBUG:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
-elif os.getenv('GITHUB_WORKFLOW'):
+elif os.getenv('ENV_GITHUB_WORKFLOW'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -175,7 +175,7 @@ TEST_PRIVATE_KEY = os.environ.get("TEST_PRIVATE_KEY")
 TOKEN_ADDRESS = os.environ.get("TOKEN_ADDRESS")
 IPFS_SERVICE_ENDPOINT = os.environ.get("IPFS_SERVICE_ENDPOINT")
 
-if os.getenv('GITHUB_WORKFLOW'):
+if os.getenv('ENV_GITHUB_WORKFLOW'):
     PRIVATE_KEY = os.getenv("PRIVATE_KEY")
     TEST_PRIVATE_KEY = os.getenv("TEST_PRIVATE_KEY")
     TOKEN_ADDRESS = os.getenv("TOKEN_ADDRESS")
