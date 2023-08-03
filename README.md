@@ -1,4 +1,4 @@
-# OCEAN Decentralized Backend Storage
+# OCEAN Decentralized Backend Storage - TEST
 
 ## Description
 Initial repository implementing a solution for the Ocean Decentralized Backend storage management service [explained here](https://github.com/oceanprotocol/decentralized_storage_backend/issues/1)
@@ -64,3 +64,4 @@ This project is delivered under an Apache License
 ## Associated projects
  - DBS Filecoin microservice (https://github.com/oceanprotocol/dbs_filecoin)
  - DBS Arweave microservice (https://github.com/oceanprotocol/dbs_arweave)
+
