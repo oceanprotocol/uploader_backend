@@ -14,6 +14,7 @@
   - [🔗 GetLink](#getlink)
 - [🔐 DBS Private API Endpoints (Used by Microservices)](#dbs-private-api-endpoints-used-by-microservices)
   - [✅ Register](#register)
+- [💾 Storage Flow](#storage-flow)
 - [⚙️ ENVS](#envs)
 - [🐳 Docker Deployment](#docker-deployment)
 - [🤝 Support](#support)
