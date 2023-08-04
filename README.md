@@ -266,10 +266,10 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 - **Frontend -> DBS:** Fetch storage types & payment options.
 - **DBS -> Frontend:** Return storage types & payment options.
 
-### 2. Getting Quote for 1Mb File Storage
+### 2. Getting Quote for File Storage
 
-- **Frontend -> DBS:** Request quote for storing 1Mb file on Filecoin.
-- **DBS -> Filecoin microservice:** Request quote for storing 1Mb file on Filecoin.
+- **Frontend -> DBS:** Request quote for storing file on Filecoin.
+- **DBS -> Filecoin microservice:** Request quote for storing file on Filecoin.
 - **Filecoin microservice -> DBS:** Return payment details & quoteId.
 - **DBS -> Frontend:** Return payment details & quoteId.
 
