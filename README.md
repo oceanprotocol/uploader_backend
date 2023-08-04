@@ -257,10 +257,47 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 **Additional Information:** Each microservice should call this endpoint every 10 minutes, otherwise the storage type will be removed from the main list.
 
+
+## Storage Flow
+
+### 1. Retrieving Storage Types & Payment Options
+
+- **Frontend -> DBS:** Fetch storage types & payment options.
+- **DBS -> Frontend:** Return storage types & payment options.
+
+### 2. Getting Quote for 1Mb File Storage
+
+- **Frontend -> DBS:** Request quote for storing 1Mb file on Filecoin.
+- **DBS -> Filecoin microservice:** Request quote for storing 1Mb file on Filecoin.
+- **Filecoin microservice -> DBS:** Return payment details & quoteId.
+- **DBS -> Frontend:** Return payment details & quoteId.
+
+### 3. Uploading Files
+
+- **Frontend -> DBS:** Upload files.
+- **DBS -> IPFS:** Write files.
+- **DBS -> Filecoin microservice:** Store data using upload endpoint.
+- **Filecoin microservice -> IPFS:** Read files.
+- **Filecoin microservice -> Filecoin microservice:** Store files on Filecoin.
+
+### 4. Checking Upload Status
+
+- **Frontend -> DBS:** Get Status.
+- **DBS -> Filecoin microservice:** Get Status.
+- **Filecoin microservice -> DBS:** Upload done.
+- **DBS -> Frontend:** Confirm upload is done.
+
+### 5. Retrieving File Link
+
+- **Frontend -> DBS:** Get Link.
+- **DBS -> Filecoin microservice:** Get Link.
+- **Filecoin microservice -> DBS:** Return Filecoin object.
+- **DBS -> Frontend:** Return Filecoin object.
+
+
 ## ENVS
 
-- DEBUG = False  (if we should enable debug mode in django)
-- SECRET_KEY = secret key for django
+Check .env.example for all of the required environmental variables. 
 
 ## Docker Deployment
 
