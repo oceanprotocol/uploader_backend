@@ -6,6 +6,7 @@ urlpatterns = [
     path('register', views.StorageCreationView.as_view(), name="service-creation"),
     path('getStatus', views.QuoteStatusView.as_view(), name="status"),
     path('getLink', views.QuoteLink.as_view(), name="link"),
+    path('getHistory', views.QuoteHistory.as_view(), name="history"),
     path('getQuote', views.QuoteCreationView.as_view()),
     path('upload', views.UploadFile.as_view())
 ]

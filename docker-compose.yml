@@ -17,6 +17,7 @@ services:
     container_name: ${APP_NAME}_mariadb
     image: mariadb
     restart: always
+    network_mode: host
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_USER: test
@@ -30,20 +31,19 @@ services:
       retries: 10
     # volumes:
     #   - ./mounts/mariadb:/var/lib/mariadb
-    network_mode: host
   dbs_filecoin:
     container_name: ${APP_NAME}_filecoin
+    network_mode: host
     build: ./services/dbs_filecoin/
     env_file: .env # Used to provide the filecoin env variables
     depends_on:
       mariadb:
         condition: service_healthy
-    network_mode: host
   dbs_arweave:
     container_name: ${APP_NAME}_arweave
+    network_mode: host
     build: ./services/dbs_arweave/
     env_file: .env
-    network_mode: host
   ipfs:
     image: ipfs/kubo
     network_mode: host

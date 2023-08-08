@@ -227,7 +227,6 @@ class QuoteCreationView(APIView):
                     'approveAddress': serializers.CharField(),
                     'chainId': serializers.IntegerField(),
                     'tokenAddress': serializers.CharField(),
-                    'tokenAddress': serializers.CharField(),
                 }
             ),
             400: OpenApiResponse(description='Storage service response badly formatted.'),
@@ -563,3 +562,72 @@ class QuoteLink(APIView):
                 "type": quote.storage.type,
                 "CID": json.loads(response.content)[0]['CID']
             })
+
+class QuoteHistory(APIView):
+    @csrf_exempt
+    @extend_schema(
+        request=[],
+        parameters=[
+            OpenApiParameter(
+                name='userAddress',
+                description='User Address',
+                type=str
+            ),
+            OpenApiParameter(
+                name='nonce',
+                description='Nonce',
+                type=int
+            ),
+            OpenApiParameter(
+                name='signature',
+                description='Signature',
+                type=str
+            )
+        ],
+        examples=[
+            OpenApiExample(
+                "QuoteHistoryResponseExample",
+                value=[
+                    {
+                        "quoteId": "xxxx",
+                        "CID": "xxxx",
+                    }
+                ],
+                request_only=False,
+                response_only=True
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='QuoteHistoryResponseSerializer',
+                fields={
+                    'type': serializers.IntegerField(),
+                    'CID': serializers.CharField()
+                }
+            ),
+            404: OpenApiResponse(description='Quote does not exist.'),
+        }
+    )
+    def get(self, request):
+        params = {**request.GET}
+        userAddress = request.GET.get('userAddress')
+
+        """
+        Retrieve the quote documents from the micro-services
+        """
+        storages = Storage.objects.filter(is_active=True)
+        histories = []
+        for storage in storages:
+            # Request status of quote from micro-service
+            response = requests.get(
+                storage.url + 'getHistory?userAddress=' +
+                userAddress + '&nonce=' +
+                params['nonce'][0] + '&signature=' + params['signature'][0]
+            )
+
+            if response.status_code != 200:
+                return Response(json.loads(response.content), status=400)
+            histories.append(response.json())
+
+        return Response(histories, status=200)
+
