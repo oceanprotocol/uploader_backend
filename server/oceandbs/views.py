@@ -589,8 +589,21 @@ class QuoteHistory(APIView):
                 "QuoteHistoryResponseExample",
                 value=[
                     {
-                        "quoteId": "xxxx",
-                        "CID": "xxxx",
+                        "quoteId": "23",
+                        "status": 400,
+                        "chainId": 80001,
+                        "tokenAddress": "0x222",
+                        "tokenAmount": "999999999",
+                        "approveAddress": "0x1234",
+                        "transactionHash": "xxxx"
+                    },
+                    {
+                        "quoteId": "23",
+                        "chainId": 80001,
+                        "tokenAddress": "0x222",
+                        "tokenAmount": "999999999",
+                        "approveAddress": "0x1234",
+                        "requestId": "xxxx"
                     }
                 ],
                 request_only=False,
@@ -601,15 +614,25 @@ class QuoteHistory(APIView):
             200: inline_serializer(
                 name='QuoteHistoryResponseSerializer',
                 fields={
-                    'type': serializers.IntegerField(),
-                    'CID': serializers.CharField()
+                    "quoteId": serializers.CharField(),
+                    "status": serializers.IntegerField(),
+                    "chainId": serializers.IntegerField(),
+                    "tokenAddress": serializers.CharField(),
+                    "tokenAmount": serializers.CharField(),
+                    "approveAddress": serializers.CharField(),
+                    "transactionHash": serializers.CharField(),
+                    "requestId": serializers.CharField(),
                 }
             ),
-            404: OpenApiResponse(description='Quote does not exist.'),
+            404: OpenApiResponse(description='History Not Found.'),
         }
     )
     def get(self, request):
         params = {**request.GET}
+
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
+            return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
+
         userAddress = request.GET.get('userAddress')
 
         """
