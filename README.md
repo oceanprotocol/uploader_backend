@@ -45,6 +45,13 @@ It is a django-based solution benefitting from django-rest-framework for the cla
     - Manages IPFS temporary storage.
 2. **1-N Storage MicroServices:** Each microservice can handle different storage types.
 
+## Usage
+
+If you wish to use Ocean Decentralized Backend Storage in your project we recommend implementing it using the [dbs javascript library](https://www.npmjs.com/package/@oceanprotocol/dbs). You will also require the following information:
+
+This server is currently deployed at: `https://dbs.oceanprotocol.com`
+
+The account is: `0x5F8396D1BfDa5259Ee89196F892E4401BF3B596d`
 
 ## Installation
 
