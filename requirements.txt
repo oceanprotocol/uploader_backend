@@ -74,3 +74,4 @@ web3==5.31.3
 websockets==9.1
 yarl==1.8.1
 zipp==3.9.0
+django-cors-headers
