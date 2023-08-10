@@ -650,7 +650,9 @@ class QuoteHistory(APIView):
 
             if response.status_code != 200:
                 return Response(json.loads(response.content), status=400)
-            histories.append(response.json())
+
+            storage_history = {storage.type: response.json()}
+            histories.append(storage_history)
 
         return Response(histories, status=200)
 
