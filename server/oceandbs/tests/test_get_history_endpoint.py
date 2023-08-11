@@ -18,7 +18,7 @@ class TestGetHistoryEndpoint(APITestCase):
         self.client = APIClient()
 
     @responses.activate
-    def test_quote_status_endpoint(self):
+    def test_get_history_endpoint(self):
         private_key = os.environ.get("TEST_PRIVATE_KEY")
         if not private_key.startswith('0x'):
             private_key = '0x' + private_key
