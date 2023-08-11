@@ -4,7 +4,7 @@ from eth_account import Account
 from rest_framework.test import APIRequestFactory, APIClient, APITestCase
 import responses
 
-from server.oceandbs.utils import generate_signature
+from ..utils import generate_signature
 from django.conf import settings
 
 
