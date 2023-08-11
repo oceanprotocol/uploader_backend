@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from urllib.parse import urljoin, urlparse
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -17,6 +18,7 @@ from web3.middleware import geth_poa_middleware
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
 from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
+
 
 # Storage service creation class
 class StorageCreationView(APIView):
@@ -250,15 +252,49 @@ class QuoteCreationView(APIView):
             # If not exists, raise error
         except:
             return Response({'error': 'Chosen storage type does not exist.'}, status=400)
+        
+        response = None 
 
-        # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
-        headers = {'User-Agent': 'Mozilla/5.0',
-                   'Content-Type': 'application/json'}
-        response = requests.post(
-            storage.url + 'getQuote/',
-            json.dumps(data),
-            headers=headers
-        )
+        try:
+            # For the given type of storage, make a call to the associated service API (mock first) to retrieve a cost associated with that
+            headers = {'User-Agent': 'Mozilla/5.0',
+                    'Content-Type': 'application/json'}
+
+            get_quote_url = urljoin(storage.url, 'getQuote')
+            print(f"Preparing to make request to URL: {get_quote_url}")
+            parsed_url = urlparse(get_quote_url)
+            print(f"Using port: {parsed_url.port or 'default port (80 or 443)'}")
+
+
+            # Log the data being sent for troubleshooting
+            print(f"Data being sent: {json.dumps(data)}")
+            print(f"Headers being sent: {headers}")
+
+            response = requests.post(
+                get_quote_url,
+                json.dumps(data),
+                headers=headers,
+                timeout=10  # Set a timeout to avoid indefinite waiting
+            )
+
+            # If the request was successful, log the response content
+            if response.status_code == 200:
+                print(f"Request to {get_quote_url} was successful.")
+                print(f"Response received: {response.text}")
+            else:
+                print(f"Received {response.status_code} status code from {get_quote_url} with response: {response.text}")
+
+        except requests.Timeout:
+            print(f"Request to {get_quote_url} timed out.")
+
+        except requests.RequestException as e:
+            print(f"An error occurred while making a request to {get_quote_url}. Error: {e}")
+
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+        if response is None:
+            print("No response was obtained from the API call.")
 
         if response and response.status_code == 200:
             response_data = json.loads(response.content)
@@ -335,8 +371,10 @@ class QuoteStatusView(APIView):
             return Response('Quote does not exist.', status=404)
 
         # Request status of quote from micro-service
+        get_status_endpoint = f'getStatus?quoteId={quoteId}'
+        get_status_url = urljoin(quote.storage.url, get_status_endpoint)
         response = requests.get(
-            quote.storage.url + 'getStatus?quoteId=' + str(quoteId)
+            get_status_url
         )
 
         try:
@@ -439,17 +477,6 @@ class UploadFile(APIView):
         except Exception as e:
             return Response(f"Error uploading to IPFS: {str(e)}", status=500)
 
-        # Create allowance for funds transfer
-        try:
-            create_allowance(
-                quote,
-                getattr(settings, 'PRIVATE_KEY', '0000000000000000000000000000000000000000000000000000000000000000'),
-                getattr(settings, 'TEST_ABI', '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"guy","type":"address"},{"name":"wad","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"src","type":"address"},{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"wad","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"dst","type":"address"},{"name":"wad","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"deposit","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"guy","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"dst","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"src","type":"address"},{"indexed":false,"name":"wad","type":"uint256"}],"name":"Withdrawal","type":"event"}]')
-            )
-        except Exception as e:
-            return Response(f"Error creating allowance: {str(e)}", status=500)
-
-
         # Upload files to micro-service
         try:
             response = upload_files_to_microservice(quote, params, files_reference)
@@ -539,12 +566,19 @@ class QuoteLink(APIView):
         """
     Retrieve the quote documents links from the associated micro-service
     """
+        
+        # Construct the URL using urljoin
+        get_link_url = urljoin(quote.storage.url, 'getLink')
+
+        # Use the params argument to handle query parameters
+        query_parameters = {
+            'quoteId': str(quoteId),
+            'nonce': params['nonce'][0],
+            'signature': params['signature'][0]
+        }
+        
         # Request status of quote from micro-service
-        response = requests.get(
-            quote.storage.url + 'getLink?quoteId=' +
-            str(quoteId) + '&nonce=' +
-            params['nonce'][0] + '&signature=' + params['signature'][0]
-        )
+        response = requests.get(get_link_url, params=query_parameters)
 
         if response.status_code != 200:
             return Response(json.loads(response.content), status=400)

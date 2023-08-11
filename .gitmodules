@@ -1,6 +1,8 @@
 [submodule "services/dbs_filecoin"]
 	path = services/dbs_filecoin
 	url = https://github.com/oceanprotocol/dbs_filecoin.git
+	branch = main
 [submodule "services/dbs_arweave"]
 	path = services/dbs_arweave
 	url = https://github.com/oceanprotocol/dbs_arweave.git
+	branch = main
