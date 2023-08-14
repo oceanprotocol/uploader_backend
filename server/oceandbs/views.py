@@ -672,21 +672,24 @@ class QuoteHistory(APIView):
         """
         Retrieve the quote documents from the micro-services
         """
-        storages = Storage.objects.filter(is_active=True)
-        histories = []
-        for storage in storages:
-            # Request status of quote from micro-service
-            response = requests.get(
-                storage.url + 'getHistory?userAddress=' +
-                userAddress + '&nonce=' +
-                params['nonce'][0] + '&signature=' + params['signature'][0]
-            )
+        try:
+            storages = Storage.objects.filter(is_active=True)
+            histories = []
+            for storage in storages:
+                # Request status of quote from micro-service
+                response = requests.get(
+                    storage.url + 'getHistory?userAddress=' +
+                    userAddress + '&nonce=' +
+                    params['nonce'][0] + '&signature=' + params['signature'][0]
+                )
+                print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
 
-            if response.status_code != 200:
-                return Response(json.loads(response.content), status=400)
+                if response.status_code != 200:
+                    return Response(json.loads(response.content), status=400)
 
-            storage_history = {storage.type: response.json()}
-            histories.append(storage_history)
+                histories.append(response.json())
 
-        return Response(histories, status=200)
+            return Response(histories, status=200)
 
+        except Exception as e:
+            return Response(f"Error updating quote status after failed upload: {str(e)}", status=500)

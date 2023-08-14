@@ -12,6 +12,7 @@
   - [⬆️ Upload](#upload)
   - [🔄 GetStatus](#getstatus)
   - [🔗 GetLink](#getlink)
+  - [🔗 GetHistory](#gethistory)
 - [🔐 DBS Private API Endpoints (Used by Microservices)](#dbs-private-api-endpoints-used-by-microservices)
   - [✅ Register](#register)
 - [💾 Storage Flow](#storage-flow)
@@ -75,6 +76,7 @@ You can create a superuser with `./manage.py createsuperuser` to be able to acce
 - Get Link: `/getLink`
 - Get Quote: `/getQuote`
 - Upload File: `/upload`
+- Get History: `/getHistory`
 
 
 ### Info
@@ -217,6 +219,45 @@ Where status can be:
         "CID": "xxxx",
         "dealIDs":["x" , "x2"]
     }
+]
+```
+
+Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts/did-ddo#files) 
+
+### GetHistory
+
+**Description**: Gets history quotes for a certain user
+
+**Path**: `GET /getHistory?userAddress=xxx&nonce=1&signature=0xXXXXX`
+
+**Input:**
+- `userAddress`: wallet address
+- `nonce`: timestamp (has to be higher than previous stored nonce for this user)
+- `signature`: user signed hash of SHA256('' + nonce)
+
+**Returns:**
+
+```
+[
+    [{  
+        "type": 'arweave',
+        "quoteId": "23",
+        "chainId": 80001,
+        "tokenAddress": "0x222",
+        "tokenAmount": "999999999",
+        "approveAddress": "0x1234",
+        "requestId": "xxxx"
+    }],
+    [{
+        "type": 'filecoin',
+        "quoteId": "23",
+        "status": 400,
+        "chainId": 80001,
+        "tokenAddress": "0x222",
+        "tokenAmount": "999999999",
+        "approveAddress": "0x1234",
+        "transactionHash": "xxxx"
+    }]
 ]
 ```
 
