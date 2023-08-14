@@ -268,39 +268,11 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 ## Storage Flow
 
-### 1. Retrieving Storage Types & Payment Options
+![image](https://github.com/oceanprotocol/decentralized_storage_backend/assets/50501033/2c34321d-f809-40c1-911d-64a7727821f1)
 
-- **Frontend -> DBS:** Fetch storage types & payment options.
-- **DBS -> Frontend:** Return storage types & payment options.
 
-### 2. Getting Quote for 1Mb File Storage
+![image](https://github.com/oceanprotocol/decentralized_storage_backend/assets/50501033/42200343-38c2-4d61-a939-32212ed8217e)
 
-- **Frontend -> DBS:** Request quote for storing 1Mb file on Filecoin.
-- **DBS -> Filecoin microservice:** Request quote for storing 1Mb file on Filecoin.
-- **Filecoin microservice -> DBS:** Return payment details & quoteId.
-- **DBS -> Frontend:** Return payment details & quoteId.
-
-### 3. Uploading Files
-
-- **Frontend -> DBS:** Upload files.
-- **DBS -> IPFS:** Write files.
-- **DBS -> Filecoin microservice:** Store data using upload endpoint.
-- **Filecoin microservice -> IPFS:** Read files.
-- **Filecoin microservice -> Filecoin microservice:** Store files on Filecoin.
-
-### 4. Checking Upload Status
-
-- **Frontend -> DBS:** Get Status.
-- **DBS -> Filecoin microservice:** Get Status.
-- **Filecoin microservice -> DBS:** Upload done.
-- **DBS -> Frontend:** Confirm upload is done.
-
-### 5. Retrieving File Link
-
-- **Frontend -> DBS:** Get Link.
-- **DBS -> Filecoin microservice:** Get Link.
-- **Filecoin microservice -> DBS:** Return Filecoin object.
-- **DBS -> Frontend:** Return Filecoin object.
 
 
 ## ENVS
