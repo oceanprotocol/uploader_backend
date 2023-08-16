@@ -29,7 +29,7 @@ class TestCreateQuoteEndpoint(APITestCase):
     }
 
     responses.post(
-      url= 'https://filecoin.org/getQuote/',
+      url= 'https://filecoin.org/getQuote',
       json={
         'tokenAmount': 16746036207,
         'approveAddress': '0xAFcE990754C38Be5E0C341707B2A162C4e67547B',
