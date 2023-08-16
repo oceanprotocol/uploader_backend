@@ -692,4 +692,4 @@ class QuoteHistory(APIView):
             return Response(histories, status=200)
 
         except Exception as e:
-            return Response(f"Error updating quote status after failed upload: {str(e)}", status=500)
+            return Response(f"Error while getting history: {str(e)} {str(e)}", status=500)
