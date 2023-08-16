@@ -116,7 +116,7 @@ class TestStorageRegistrationEndpoint(APITestCase):
 
     # The actual request to create a new storage service
     response = self.client.post(  
-      '/register', 
+      '/register',
       data=json.dumps(body),
       content_type='application/json'
     )
@@ -136,9 +136,9 @@ class TestStorageRegistrationEndpoint(APITestCase):
     )
 
     # Assert proper HTTP status code
-    self.assertEqual(response.status_code, 400)
+    self.assertEqual(response.status_code, 200)
     # Assert content of the response itself, pure JSON
-    self.assertEqual(response.data, 'Chosen storage type already exists.')
+    self.assertEqual(response.data, 'Chosen storage type is already active and registered.')
 
     storage = Storage.objects.all()
     self.assertEqual(len(storage), 1)
