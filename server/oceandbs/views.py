@@ -229,7 +229,6 @@ class QuoteCreationView(APIView):
                     'approveAddress': serializers.CharField(),
                     'chainId': serializers.IntegerField(),
                     'tokenAddress': serializers.CharField(),
-                    'tokenAddress': serializers.CharField(),
                 }
             ),
             400: OpenApiResponse(description='Storage service response badly formatted.'),
@@ -597,3 +596,100 @@ class QuoteLink(APIView):
                 "type": quote.storage.type,
                 "CID": json.loads(response.content)[0]['CID']
             })
+
+class QuoteHistory(APIView):
+    @csrf_exempt
+    @extend_schema(
+        request=[],
+        parameters=[
+            OpenApiParameter(
+                name='userAddress',
+                description='User Address',
+                type=str
+            ),
+            OpenApiParameter(
+                name='nonce',
+                description='Nonce',
+                type=int
+            ),
+            OpenApiParameter(
+                name='signature',
+                description='Signature',
+                type=str
+            )
+        ],
+        examples=[
+            OpenApiExample(
+                "QuoteHistoryResponseExample",
+                value=[
+                    {
+                        "quoteId": "23",
+                        "status": 400,
+                        "chainId": 80001,
+                        "tokenAddress": "0x222",
+                        "tokenAmount": "999999999",
+                        "approveAddress": "0x1234",
+                        "transactionHash": "xxxx"
+                    },
+                    {
+                        "quoteId": "23",
+                        "chainId": 80001,
+                        "tokenAddress": "0x222",
+                        "tokenAmount": "999999999",
+                        "approveAddress": "0x1234",
+                        "requestId": "xxxx"
+                    }
+                ],
+                request_only=False,
+                response_only=True
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='QuoteHistoryResponseSerializer',
+                fields={
+                    "quoteId": serializers.CharField(),
+                    "status": serializers.IntegerField(),
+                    "chainId": serializers.IntegerField(),
+                    "tokenAddress": serializers.CharField(),
+                    "tokenAmount": serializers.CharField(),
+                    "approveAddress": serializers.CharField(),
+                    "transactionHash": serializers.CharField(),
+                    "requestId": serializers.CharField(),
+                }
+            ),
+            404: OpenApiResponse(description='History Not Found.'),
+        }
+    )
+    def get(self, request):
+        params = {**request.GET}
+
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
+            return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
+
+        userAddress = request.GET.get('userAddress')
+
+        """
+        Retrieve the quote documents from the micro-services
+        """
+        try:
+            storages = Storage.objects.filter(is_active=True)
+            histories = []
+            for storage in storages:
+                # Request status of quote from micro-service
+                response = requests.get(
+                    storage.url + 'getHistory?userAddress=' +
+                    userAddress + '&nonce=' +
+                    params['nonce'][0] + '&signature=' + params['signature'][0]
+                )
+                print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
+
+                if response.status_code != 200:
+                    return Response(json.loads(response.content), status=400)
+
+                histories.append(response.json())
+
+            return Response(histories, status=200)
+
+        except Exception as e:
+            return Response(f"Error while getting history: {str(e)} {str(e)}", status=500)

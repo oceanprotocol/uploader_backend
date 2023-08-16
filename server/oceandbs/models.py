@@ -63,13 +63,13 @@ def nonce_computation():
 
 class Quote(models.Model):
   created = models.DateTimeField(default=timezone.now)
-  quoteId = models.CharField(max_length=256, null = True)
-  storage = models.ForeignKey(Storage, null = True, on_delete=models.SET_NULL, related_name ="quotes")
+  quoteId = models.CharField(max_length=256, null=True)
+  storage = models.ForeignKey(Storage, null=True, on_delete=models.SET_NULL, related_name="quotes")
   duration = models.BigIntegerField()
-  payment = models.OneToOneField(Payment, null=True, blank=True, related_name = "quote", on_delete=models.CASCADE)
-  tokenAddress = models.CharField(max_length=256, null = True)
-  approveAddress = models.CharField(max_length=256, null = True)
-  tokenAmount = models.BigIntegerField(null = True)
+  payment = models.OneToOneField(Payment, null=True, blank=True, related_name="quote", on_delete=models.CASCADE)
+  tokenAddress = models.CharField(max_length=256, null=True)
+  approveAddress = models.CharField(max_length=256, null=True)
+  tokenAmount = models.BigIntegerField(null=True)
   status = models.CharField(choices=UPLOAD_CODE, default=UPLOAD_CODE[1], null=True, blank=True, max_length=3)
   nonce = models.DateTimeField(default=nonce_computation())
 
