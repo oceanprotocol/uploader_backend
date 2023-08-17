@@ -677,11 +677,15 @@ class QuoteHistory(APIView):
             histories = []
             for storage in storages:
                 # Request status of quote from micro-service
-                response = requests.get(
-                    storage.url + 'getHistory?userAddress=' +
-                    userAddress + '&nonce=' +
-                    params['nonce'][0] + '&signature=' + params['signature'][0]
-                )
+                try:
+                    response = requests.get(
+                        storage.url + 'getHistory?userAddress=' +
+                        userAddress + '&nonce=' +
+                        params['nonce'][0] + '&signature=' + params['signature'][0]
+                    )
+                except Exception as e:
+                    return Response(f"Error while calling history endpoint from storage {storage.type}: {str(e)}", status=500)
+
                 print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
 
                 if response.status_code != 200:
@@ -692,4 +696,4 @@ class QuoteHistory(APIView):
             return Response(histories, status=200)
 
         except Exception as e:
-            return Response(f"Error while getting history: {str(e)} {str(e)}", status=500)
+            return Response(f"Error while getting history: {str(e)}", status=500)
