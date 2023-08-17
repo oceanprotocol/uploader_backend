@@ -1,3 +1,4 @@
+import datetime
 import json
 import requests
 
@@ -662,37 +663,45 @@ class QuoteHistory(APIView):
         }
     )
     def get(self, request):
+        print(f'Entered getHistory endpoint: {datetime.datetime.now()}')
         params = {**request.GET}
 
         if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
             return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
 
+        print(f'Checked validation at: {datetime.datetime.now()}')
+
         userAddress = request.GET.get('userAddress')
+        print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
 
         """
         Retrieve the quote documents from the micro-services
         """
         try:
             storages = Storage.objects.filter(is_active=True)
+            print(f'Storages {storages} at {datetime.datetime.now()}')
             histories = []
             for storage in storages:
                 # Request status of quote from micro-service
+                print(f'Before request at {datetime.datetime.now()} for {storage.type}')
                 try:
                     response = requests.get(
                         storage.url + 'getHistory?userAddress=' +
                         userAddress + '&nonce=' +
                         params['nonce'][0] + '&signature=' + params['signature'][0]
                     )
+                    print(f'After request at {datetime.datetime.now()} for {storage.type}')
                 except Exception as e:
                     return Response(f"Error while calling history endpoint from storage {storage.type}: {str(e)}", status=500)
 
                 print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
-
+                print(f'Response check: {response.json()} and {response.status_code} at {datetime.datetime.now()}')
                 if response.status_code != 200:
                     return Response(json.loads(response.content), status=400)
-
+                print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
                 histories.append(response.json())
 
+            print(f'Histories {datetime.datetime.now()} {histories}')
             return Response(histories, status=200)
 
         except Exception as e:
