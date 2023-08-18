@@ -686,6 +686,7 @@ class QuoteHistory(APIView):
             return Response(f"Error while retrieving possible storages: {str(e)}", status=500)
 
         histories = []
+        history = dict()
         for storage in storages:
             # Request status of quote from micro-service
             print(f'Before request at {datetime.datetime.now()} for {storage.type}')
@@ -707,13 +708,12 @@ class QuoteHistory(APIView):
 
             print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
             if storage.type == 'arweave':
-                history = {'arweave': response.json()}
-                print(f'History for arweave: {history} at {datetime.datetime.now()}')
+                history['arweave'] = response.json()
+                print(f'History for arweave: {history["arweave"]} at {datetime.datetime.now()}')
             elif storage.type == 'filecoin':
                 history = response.json()
-                history["filecoin"] = history["data"]
-                del history["data"]
-                print(f'History for filecoin: {history} at {datetime.datetime.now()}')
+                history["filecoin"] = response.json()["data"]
+                print(f'History for filecoin: {history["filecoin"]} at {datetime.datetime.now()}')
 
             histories.append(history)
             time.sleep(2)
