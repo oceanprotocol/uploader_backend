@@ -1,12 +1,14 @@
 import datetime
 import json
+import time
+
 import requests
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlencode
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -680,29 +682,46 @@ class QuoteHistory(APIView):
         try:
             storages = Storage.objects.filter(is_active=True)
             print(f'Storages {storages} at {datetime.datetime.now()}')
-            histories = []
-            for storage in storages:
-                # Request status of quote from micro-service
-                print(f'Before request at {datetime.datetime.now()} for {storage.type}')
-                try:
-                    response = requests.get(
-                        storage.url + 'getHistory?userAddress=' +
-                        userAddress + '&nonce=' +
-                        params['nonce'][0] + '&signature=' + params['signature'][0]
-                    )
-                    print(f'After request at {datetime.datetime.now()} for {storage.type}')
-                except Exception as e:
-                    return Response(f"Error while calling history endpoint from storage {storage.type}: {str(e)}", status=500)
-
-                print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
-                print(f'Response check: {response.json()} and {response.status_code} at {datetime.datetime.now()}')
-                if response.status_code != 200:
-                    return Response(json.loads(response.content), status=400)
-                print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
-                histories.append(response.json())
-
-            print(f'Histories {datetime.datetime.now()} {histories}')
-            return Response(histories, status=200)
-
         except Exception as e:
-            return Response(f"Error while getting history: {str(e)}", status=500)
+            return Response(f"Error while retrieving possible storages: {str(e)}", status=500)
+
+        histories = []
+        history = dict()
+        for storage in storages:
+            # Request status of quote from micro-service
+            print(f'Before request at {datetime.datetime.now()} for {storage.type}')
+            try:
+                query_params = {
+                    'userAddress': userAddress,
+                    'nonce': params['nonce'][0],
+                    'signature': params['signature'][0]
+                }
+                absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
+
+                response = requests.get(
+                    absolute_url
+                )
+                print(f'After request at {datetime.datetime.now()} for {storage.type}')
+            except Exception as e:
+                return Response(f"Error while calling history endpoint from storage {storage.type}: {str(e)}", status=500)
+
+            print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
+            print(f'Response check: {response.json()} and {response.status_code} at {datetime.datetime.now()}')
+
+            if response.status_code != 200:
+                return Response(json.loads(response.content), status=400)
+
+            print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
+            if storage.type == 'arweave':
+                history['arweave'] = response.json()
+                print(f'History for arweave: {history["arweave"]} at {datetime.datetime.now()}')
+            elif storage.type == 'filecoin':
+                history = response.json()
+                history["filecoin"] = response.json()["data"]
+                print(f'History for filecoin: {history["filecoin"]} at {datetime.datetime.now()}')
+
+            histories.append(history)
+            time.sleep(2)
+
+        print(f'Histories {datetime.datetime.now()} {histories}')
+        return Response(histories, status=200)
