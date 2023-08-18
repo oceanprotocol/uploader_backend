@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlencode
 
 from rest_framework import serializers, parsers
 from rest_framework.views import APIView
@@ -691,10 +691,15 @@ class QuoteHistory(APIView):
             # Request status of quote from micro-service
             print(f'Before request at {datetime.datetime.now()} for {storage.type}')
             try:
+                query_params = {
+                    'userAddress': userAddress,
+                    'nonce': params['nonce'][0],
+                    'signature': params['signature'][0]
+                }
+                absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
+
                 response = requests.get(
-                    storage.url + 'getHistory?userAddress=' +
-                    userAddress + '&nonce=' +
-                    params['nonce'][0] + '&signature=' + params['signature'][0]
+                    absolute_url
                 )
                 print(f'After request at {datetime.datetime.now()} for {storage.type}')
             except Exception as e:
