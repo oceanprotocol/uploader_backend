@@ -673,7 +673,7 @@ class QuoteHistory(APIView):
 
         print(f'Checked validation at: {datetime.datetime.now()}')
 
-        userAddress = request.GET.get('userAddress').lower()
+        userAddress = request.GET.get('userAddress')
         print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
 
         """
