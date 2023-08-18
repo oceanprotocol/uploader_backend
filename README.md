@@ -12,7 +12,7 @@
   - [⬆️ Upload](#upload)
   - [🔄 GetStatus](#getstatus)
   - [🔗 GetLink](#getlink)
-  - [🔗 GetHistory](#gethistory)
+  - [📜 GetHistory](#gethistory)
 - [🔐 DBS Private API Endpoints (Used by Microservices)](#dbs-private-api-endpoints-used-by-microservices)
   - [✅ Register](#register)
 - [💾 Storage Flow](#storage-flow)
