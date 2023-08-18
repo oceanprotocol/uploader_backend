@@ -673,7 +673,7 @@ class QuoteHistory(APIView):
 
         print(f'Checked validation at: {datetime.datetime.now()}')
 
-        userAddress = request.GET.get('userAddress')
+        userAddress = request.GET.get('userAddress').lower()
         print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
 
         """
@@ -686,7 +686,6 @@ class QuoteHistory(APIView):
             return Response(f"Error while retrieving possible storages: {str(e)}", status=500)
 
         histories = []
-        history = dict()
         for storage in storages:
             # Request status of quote from micro-service
             print(f'Before request at {datetime.datetime.now()} for {storage.type}')
@@ -712,15 +711,18 @@ class QuoteHistory(APIView):
                 return Response(json.loads(response.content), status=400)
 
             print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
-            if storage.type == 'arweave':
-                history['arweave'] = response.json()
-                print(f'History for arweave: {history["arweave"]} at {datetime.datetime.now()}')
-            elif storage.type == 'filecoin':
-                history = response.json()
-                history["filecoin"] = response.json()["data"]
-                print(f'History for filecoin: {history["filecoin"]} at {datetime.datetime.now()}')
+            history_entry = {}
 
-            histories.append(history)
+            if storage.type == 'arweave':
+                history_entry['arweave'] = response.json()
+                print(f'History for arweave: {history_entry["arweave"]} at {datetime.datetime.now()}')
+            elif storage.type == 'filecoin':
+                history_entry['filecoin'] = response.json()["data"]
+                print(f'History for filecoin: {history_entry["filecoin"]} at {datetime.datetime.now()}')
+
+            if history_entry:
+                histories.append(history_entry)
+
             time.sleep(2)
 
         print(f'Histories {datetime.datetime.now()} {histories}')
