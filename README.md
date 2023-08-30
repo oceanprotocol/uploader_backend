@@ -228,12 +228,13 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 **Description**: Gets history quotes for a certain user
 
-**Path**: `GET /getHistory?userAddress=xxx&nonce=1&signature=0xXXXXX`
+**Path**: `GET /getHistory?userAddress=xxx&nonce=1&signature=0xXXXXX&page=1`
 
 **Input:**
 - `userAddress`: wallet address
 - `nonce`: timestamp (has to be higher than previous stored nonce for this user)
 - `signature`: user signed hash of SHA256('' + nonce)
+- `page`: page number for user history
 
 **Returns:**
 
