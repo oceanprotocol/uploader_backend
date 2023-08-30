@@ -619,6 +619,11 @@ class QuoteHistory(APIView):
                 name='signature',
                 description='Signature',
                 type=str
+            ),
+            OpenApiParameter(
+                name='page',
+                description='Page Number',
+                type=int
             )
         ],
         examples=[
@@ -668,7 +673,7 @@ class QuoteHistory(APIView):
         print(f'Entered getHistory endpoint: {datetime.datetime.now()}')
         params = {**request.GET}
 
-        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature', 'page')):
             return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
 
         print(f'Checked validation at: {datetime.datetime.now()}')
@@ -693,7 +698,8 @@ class QuoteHistory(APIView):
                 query_params = {
                     'userAddress': userAddress,
                     'nonce': params['nonce'][0],
-                    'signature': params['signature'][0]
+                    'signature': params['signature'][0],
+                    'page': params['page'][0]
                 }
                 absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
 
