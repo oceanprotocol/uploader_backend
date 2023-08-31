@@ -228,7 +228,7 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 **Description**: Gets history quotes for a certain user
 
-**Path**: `GET /getHistory?userAddress=xxx&nonce=1&signature=0xXXXXX&page=1`
+**Path**: `GET /getHistory?userAddress=xxx&nonce=1&signature=0xXXXXX&page=1&pageSize=25`
 
 **Input:**
 - `userAddress`: wallet address
