@@ -624,6 +624,11 @@ class QuoteHistory(APIView):
                 name='page',
                 description='Page Number',
                 type=int
+            ),
+            OpenApiParameter(
+                name='pageSize',
+                description='Page Size',
+                type=int
             )
         ],
         examples=[
@@ -673,13 +678,15 @@ class QuoteHistory(APIView):
         print(f'Entered getHistory endpoint: {datetime.datetime.now()}')
         params = {**request.GET}
 
-        if not all(key in params for key in ('userAddress', 'nonce', 'signature', 'page')):
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
             return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
 
         print(f'Checked validation at: {datetime.datetime.now()}')
 
         userAddress = request.GET.get('userAddress')
         print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
+        page = request.GET.get('page', 1)
+        pageSize = request.GET.get('pageSize', 25)
 
         """
         Retrieve the quote documents from the micro-services
@@ -696,10 +703,11 @@ class QuoteHistory(APIView):
             print(f'Before request at {datetime.datetime.now()} for {storage.type}')
             try:
                 query_params = {
+                    'page': page,
+                    'pageSize': pageSize,
                     'userAddress': userAddress,
                     'nonce': params['nonce'][0],
                     'signature': params['signature'][0],
-                    'page': params['page'][0]
                 }
                 absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
 

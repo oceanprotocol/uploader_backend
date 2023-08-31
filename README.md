@@ -234,7 +234,8 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 - `userAddress`: wallet address
 - `nonce`: timestamp (has to be higher than previous stored nonce for this user)
 - `signature`: user signed hash of SHA256('' + nonce)
-- `page`: page number for user history
+- *(Optional)*`page`: page number for user history, set default to 1
+- *(Optional)*`pageSize`: page size, set default to 25
 
 **Returns:**
 
