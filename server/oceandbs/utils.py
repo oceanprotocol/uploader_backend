@@ -17,14 +17,30 @@ from requests.exceptions import RequestException
 from .models import File
 
 # This function is used to upload the files temporarily to IPFS
-def upload_files_to_ipfs(request_files, quote):
+def upload_files_to_ipfs(request_files, quote, chunk_size=1024):
     files_reference = []
     url = getattr(settings, 'IPFS_SERVICE_ENDPOINT') or "http://127.0.0.1:5001/api/v0/add"
     print('IPFS URL: ', url)
 
     try:
-        response = requests.post(url, files=request_files)
-        response.raise_for_status()  # This will raise an error for HTTP error responses
+        for file in request_files:
+            with open(file, 'rb') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+
+                    response = requests.post(
+                        url,
+                        files=chunk,
+                    )
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        print(f"Uploaded chunk {result['Name']} to IPFS with CID: {result['Hash']}")
+                    else:
+                        print(f"Failed to upload chunk: {response.status_code} - {response.text}")
+            response.raise_for_status()  # This will raise an error for HTTP error responses
         
         files = response.text.splitlines()
         for file in files:
