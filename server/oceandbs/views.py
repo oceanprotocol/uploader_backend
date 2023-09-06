@@ -704,39 +704,31 @@ class QuoteHistory(APIView):
         except Exception as e:
             return Response(f"Error while retrieving possible storages: {str(e)}", status=500)
 
-        histories = []
-        errors = []  # To collect errors from each micro-service
+        try:
+            storage = Storage.objects.filter(is_active=True, type=storage_type).first()
+            if storage is None:
+                print(f'No matching storage type found at {datetime.datetime.now()}')
+                return Response("No matching storage type found", status=404)
 
-        for storage in storages:
-            if storage.type != storage_type:
-                continue
+            query_params = {
+                'page': page,
+                'pageSize': pageSize,
+                'userAddress': userAddress,
+                'nonce': params['nonce'],
+                'signature': params['signature'],
+            }
+            absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
+            response = requests.get(absolute_url)
+            print(f'Got response from microservice at {datetime.datetime.now()}')
+            print(f'Response: {response}')
 
-            # Request status of quote from micro-service
-            try:
-                query_params = {
-                    'page': page,
-                    'pageSize': pageSize,
-                    'userAddress': userAddress,
-                    'nonce': params['nonce'][0],
-                    'signature': params['signature'][0],
-                }
-                absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
-                response = requests.get(absolute_url)
+            if response.status_code == 200:
+                return Response(response.json(), status=200)
+            else:
+                return Response(response.json(), status=500)
 
-                if response.status_code == 200:
-                    histories.extend(response.json())
-                else:
-                    errors.append(f"Error from storage {storage.type}: {json.loads(response.content)}")
-
-            except Exception as e:
-                errors.append(f"Exception while calling history endpoint from storage {storage.type}: {str(e)}")
-
-        if histories:
-            return Response(histories, status=200)
-        
-        if errors:
-            return Response({"errors": errors}, status=500)
-        
-        return Response("No matching storage type found", status=404)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return Response(f"An error occurred: {str(e)}", status=500)
 
         
