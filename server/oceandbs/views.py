@@ -629,6 +629,11 @@ class QuoteHistory(APIView):
                 name='pageSize',
                 description='Page Size',
                 type=int
+            ),
+            OpenApiParameter(
+                name='storage',
+                description='the name of the storage service',
+                type=str
             )
         ],
         examples=[
@@ -678,11 +683,13 @@ class QuoteHistory(APIView):
         print(f'Entered getHistory endpoint: {datetime.datetime.now()}')
         params = {**request.GET}
 
-        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
-            return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature', 'storage')):
+            return Response("Missing query parameters. It must include userAddress, nonce, signature and storage.", status=400)
 
         print(f'Checked validation at: {datetime.datetime.now()}')
 
+        storage_type = request.GET.get('type')
+        print(f'Retrieved storage type at {datetime.datetime.now()}, {storage_type}')
         userAddress = request.GET.get('userAddress')
         print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
         page = request.GET.get('page', 1)
@@ -699,6 +706,8 @@ class QuoteHistory(APIView):
 
         histories = []
         for storage in storages:
+            if storage.type != storage_type:
+                continue
             # Request status of quote from micro-service
             print(f'Before request at {datetime.datetime.now()} for {storage.type}')
             try:
@@ -723,21 +732,7 @@ class QuoteHistory(APIView):
 
             if response.status_code != 200:
                 return Response(json.loads(response.content), status=400)
-
-            print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
-            history_entry = {}
-
-            if storage.type == 'arweave':
-                history_entry['arweave'] = response.json()
-                print(f'History for arweave: {history_entry["arweave"]} at {datetime.datetime.now()}')
-            elif storage.type == 'filecoin':
-                history_entry['filecoin'] = response.json()["data"]
-                print(f'History for filecoin: {history_entry["filecoin"]} at {datetime.datetime.now()}')
-
-            if history_entry:
-                histories.append(history_entry)
-
-            time.sleep(2)
-
-        print(f'Histories {datetime.datetime.now()} {histories}')
-        return Response(histories, status=200)
+            
+            print(f'Histories {datetime.datetime.now()} {histories}')
+            return Response(histories, status=200)
+        
