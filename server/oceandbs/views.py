@@ -714,8 +714,8 @@ class QuoteHistory(APIView):
                 'page': page,
                 'pageSize': pageSize,
                 'userAddress': userAddress,
-                'nonce': params['nonce'],
-                'signature': params['signature'],
+                'nonce': params['nonce'][0],
+                'signature': params['signature'][0],
             }
             absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
             response = requests.get(absolute_url)
