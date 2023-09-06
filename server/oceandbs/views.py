@@ -629,6 +629,11 @@ class QuoteHistory(APIView):
                 name='pageSize',
                 description='Page Size',
                 type=int
+            ),
+            OpenApiParameter(
+                name='storage',
+                description='the name of the storage service',
+                type=str
             )
         ],
         examples=[
@@ -678,11 +683,13 @@ class QuoteHistory(APIView):
         print(f'Entered getHistory endpoint: {datetime.datetime.now()}')
         params = {**request.GET}
 
-        if not all(key in params for key in ('userAddress', 'nonce', 'signature')):
-            return Response("Missing query parameters. It must include userAddress, nonce and signature.", status=400)
+        if not all(key in params for key in ('userAddress', 'nonce', 'signature', 'storage')):
+            return Response("Missing query parameters. It must include userAddress, nonce, signature and storage.", status=400)
 
         print(f'Checked validation at: {datetime.datetime.now()}')
 
+        storage_type = request.GET.get('storage')
+        print(f'Retrieved storage type at {datetime.datetime.now()}, {storage_type}')
         userAddress = request.GET.get('userAddress')
         print(f'Retrieved userAddress at {datetime.datetime.now()}, {userAddress}')
         page = request.GET.get('page', 1)
@@ -697,47 +704,31 @@ class QuoteHistory(APIView):
         except Exception as e:
             return Response(f"Error while retrieving possible storages: {str(e)}", status=500)
 
-        histories = []
-        for storage in storages:
-            # Request status of quote from micro-service
-            print(f'Before request at {datetime.datetime.now()} for {storage.type}')
-            try:
-                query_params = {
-                    'page': page,
-                    'pageSize': pageSize,
-                    'userAddress': userAddress,
-                    'nonce': params['nonce'][0],
-                    'signature': params['signature'][0],
-                }
-                absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
+        try:
+            storage = Storage.objects.filter(is_active=True, type=storage_type).first()
+            if storage is None:
+                print(f'No matching storage type found at {datetime.datetime.now()}')
+                return Response("No matching storage type found", status=404)
 
-                response = requests.get(
-                    absolute_url
-                )
-                print(f'After request at {datetime.datetime.now()} for {storage.type}')
-            except Exception as e:
-                return Response(f"Error while calling history endpoint from storage {storage.type}: {str(e)}", status=500)
+            query_params = {
+                'page': page,
+                'pageSize': pageSize,
+                'userAddress': userAddress,
+                'nonce': params['nonce'],
+                'signature': params['signature'],
+            }
+            absolute_url = urljoin(storage.url, f'getHistory?{urlencode(query_params)}')
+            response = requests.get(absolute_url)
+            print(f'Got response from microservice at {datetime.datetime.now()}')
+            print(f'Response: {response}')
 
-            print(f"Response for storage {storage}: {response.json()}\n with status {response.status_code}")
-            print(f'Response check: {response.json()} and {response.status_code} at {datetime.datetime.now()}')
+            if response.status_code == 200:
+                return Response(response.json(), status=200)
+            else:
+                return Response(response.json(), status=500)
 
-            if response.status_code != 200:
-                return Response(json.loads(response.content), status=400)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return Response(f"An error occurred: {str(e)}", status=500)
 
-            print(f'Append history at {datetime.datetime.now()} for storage {storage.type}')
-            history_entry = {}
-
-            if storage.type == 'arweave':
-                history_entry['arweave'] = response.json()
-                print(f'History for arweave: {history_entry["arweave"]} at {datetime.datetime.now()}')
-            elif storage.type == 'filecoin':
-                history_entry['filecoin'] = response.json()["data"]
-                print(f'History for filecoin: {history_entry["filecoin"]} at {datetime.datetime.now()}')
-
-            if history_entry:
-                histories.append(history_entry)
-
-            time.sleep(2)
-
-        print(f'Histories {datetime.datetime.now()} {histories}')
-        return Response(histories, status=200)
+        
