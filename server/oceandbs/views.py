@@ -22,7 +22,7 @@ from web3.middleware import geth_poa_middleware
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
 from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
-from eth_account import Account
+from web3.auto import w3
 
 
 # Storage service creation class
@@ -98,10 +98,13 @@ class StorageCreationView(APIView):
 
             # Verify the signature and get the address that signed the original message
         try:
-            recovered_address = Account.recover_message(original_message, signature=signature)
+            print(f"Received signature in request: {signature}")
+            print(f"Received original_message in request: {original_message}")
+            recovered_address = w3.eth.account.recover_message(original_message, signature=signature)
             print(f"Recovered Ethereum address: {recovered_address}")
-        except:
+        except Exception as e:
             print("Failed to verify the signature.")
+            print(f"Specific error: {e}")
             return Response("Invalid signature.", status=400)
 
         # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
