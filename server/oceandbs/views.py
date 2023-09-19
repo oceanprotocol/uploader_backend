@@ -106,11 +106,12 @@ class StorageCreationView(APIView):
 
         # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
         approved_address = os.environ.get('APPROVED_ADDRESS')
+        print(f"Approved Ethereum address: {approved_address}")
         if recovered_address.lower() != approved_address.lower():
             print("Registration request received from non-approved address.")
             return Response("Registration request received from non-approved address.", status=403)
 
-    
+        print("Registration request received from approved address. Proceeding with registration.")
         storage, created = Storage.objects.get_or_create(type=data['type'])
 
         if not created:
