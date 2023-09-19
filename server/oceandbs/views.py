@@ -96,7 +96,7 @@ class StorageCreationView(APIView):
             print("Type key missing or None in request data.")
             return Response("Invalid input data.", status=400)
 
-            # Verify the signature and get the address that signed the original message
+        # Verify the signature and get the address that signed the original message
         try:
             print(f"Received signature in request: {signature}")
             print(f"Received original_message in request: {original_message}")
@@ -109,7 +109,7 @@ class StorageCreationView(APIView):
 
         # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
         approved_address = os.environ.get('APPROVED_ADDRESS')
-        print(f"Approved Ethereum address: {approved_address}")
+        print(f"Approved Ethereum address from env: {approved_address}")
         if recovered_address.lower() != approved_address.lower():
             print("Registration request received from non-approved address.")
             return Response("Registration request received from non-approved address.", status=403)
