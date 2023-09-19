@@ -96,7 +96,7 @@ class StorageCreationView(APIView):
             print("Type key missing or None in request data.")
             return Response("Invalid input data.", status=400)
 
-            # Verify the signature and get the address that signed the original message
+        # Verify the signature and get the address that signed the original message
         try:
             print(f"Received signature in request: {signature}")
             print(f"Received original_message in request: {original_message}")
