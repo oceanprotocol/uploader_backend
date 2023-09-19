@@ -23,6 +23,7 @@ from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerial
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
 from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
 from web3.auto import w3
+from eth_account.messages import encode_defunct
 
 
 # Storage service creation class
@@ -100,7 +101,9 @@ class StorageCreationView(APIView):
         try:
             print(f"Received signature in request: {signature}")
             print(f"Received original_message in request: {original_message}")
-            recovered_address = w3.eth.account.recover_message(original_message, signature=signature)
+            message = encode_defunct(text=original_message)
+            print(f"Encoded message: {message}")
+            recovered_address = w3.eth.account.recover_message(message, signature=signature)
             print(f"Recovered Ethereum address: {recovered_address}")
         except Exception as e:
             print("Failed to verify the signature.")
