@@ -1,6 +1,7 @@
 import datetime
 import json
 import time
+import os
 
 import requests
 
@@ -21,6 +22,7 @@ from web3.middleware import geth_poa_middleware
 from .serializers import StorageSerializer, QuoteSerializer, CreateStorageSerializer
 from .models import Quote, Storage, File, PaymentMethod, AcceptedToken, UPLOAD_CODE
 from .utils import check_params_validity, upload_files_to_ipfs, upload_files_to_microservice, create_allowance
+from eth_account import Account
 
 
 # Storage service creation class
@@ -81,10 +83,34 @@ class StorageCreationView(APIView):
         data = request.data
         print(f"Received registration request data: {data}")
 
+        # Extract the signature and original message from the request data
+        signature = data.get('signature')
+        original_message = data.get('url')
+        
+        # Ensure the signature and original message are present
+        if not signature or not original_message:
+            print("Signature or original message missing in request data.")
+            return Response("Invalid input data.", status=400)
+
         if not data.get('type'):
             print("Type key missing or None in request data.")
             return Response("Invalid input data.", status=400)
 
+            # Verify the signature and get the address that signed the original message
+        try:
+            recovered_address = Account.recover_message(original_message, signature=signature)
+            print(f"Recovered Ethereum address: {recovered_address}")
+        except:
+            print("Failed to verify the signature.")
+            return Response("Invalid signature.", status=400)
+
+        # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
+        approved_address = os.environ.get('APPROVED_ADDRESS')
+        if recovered_address.lower() != approved_address.lower():
+            print("Registration request received from non-approved address.")
+            return Response("Registration request received from non-approved address.", status=403)
+
+    
         storage, created = Storage.objects.get_or_create(type=data['type'])
 
         if not created:
