@@ -1,4 +1,4 @@
-# OCEAN Decentralized Backend Storage
+# Ocean Uploader Backend
 
 ## 📖 Menu
 
@@ -13,7 +13,7 @@
   - [🔄 GetStatus](#getstatus)
   - [🔗 GetLink](#getlink)
   - [📜 GetHistory](#gethistory)
-- [🔐 DBS Private API Endpoints (Used by Microservices)](#dbs-private-api-endpoints-used-by-microservices)
+- [🔐 Uploader Private API Endpoints (Used by Microservices)](#uploader-private-api-endpoints-used-by-microservices)
   - [✅ Register](#register)
 - [💾 Storage Flow](#storage-flow)
 - [⚙️ ENVS](#envs)
@@ -27,9 +27,8 @@
 
 
 ## Description
-Initial repository implementing a solution for the Ocean Decentralized Backend storage management service [explained here](https://github.com/oceanprotocol/decentralized_storage_backend/issues/1)
 
-It is a django-based solution benefitting from django-rest-framework for the class based API Views implementation and drf-spectacular for the Swagger based auto documentation of the API usage. 
+The Ocean Uploader Backend service is a django-based solution the acts as a proxy for calling the different Uploader microservices. The initial specifications are [explained here](https://github.com/oceanprotocol/uploader_backend/issues/1).
 
 ### Features:
 - User content uploads.
@@ -39,16 +38,16 @@ It is a django-based solution benefitting from django-rest-framework for the cla
 
 ### Architecture:
 
-1. **DBS:**
+1. **Uploader Backend:**
     - Exposes public API for frontend operations.
     - Exposes private API for microservices (through a private network).
     - Proxies requests to microservices.
     - Manages IPFS temporary storage.
-2. **1-N Storage MicroServices:** Each microservice can handle different storage types.
+2. **1-N Uploader MicroServices:** Each microservice can handle different storage types.
 
 ## Usage
 
-If you wish to use Ocean Decentralized Backend Storage in your project we recommend implementing it using the [dbs javascript library](https://www.npmjs.com/package/@oceanprotocol/dbs). You will also require the following information:
+If you wish to use the Ocean Uploader Backend in your project we recommend implementing it using the [Uploader.js library](https://www.npmjs.com/package/@oceanprotocol/uploader). You will also require the following information:
 
 This server is currently deployed at: `https://dbs.oceanprotocol.com`
 
@@ -265,7 +264,7 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts/did-ddo#files) 
 
-## DBS Private API Endpoints (Used by Microservices)
+## Uploader Private API Endpoints (Used by Microservices)
 
 **Note:** These endpoints are utilized on a different port.
 
@@ -311,10 +310,10 @@ Reference: [Ocean Protocol DID DDO](https://docs.oceanprotocol.com/core-concepts
 
 ## Storage Flow
 
-![image](https://github.com/oceanprotocol/decentralized_storage_backend/assets/50501033/2c34321d-f809-40c1-911d-64a7727821f1)
+![image](https://github.com/oceanprotocol/uploader_backend/assets/50501033/2c34321d-f809-40c1-911d-64a7727821f1)
 
 
-![image](https://github.com/oceanprotocol/decentralized_storage_backend/assets/50501033/42200343-38c2-4d61-a939-32212ed8217e)
+![image](https://github.com/oceanprotocol/uploader_backend/assets/50501033/42200343-38c2-4d61-a939-32212ed8217e)
 
 
 
@@ -358,5 +357,5 @@ Released under the Apache License.
 
 ## Associated Projects
 
-- [DBS Filecoin microservice](https://github.com/oceanprotocol/dbs_filecoin)
-- [DBS Arweave microservice](https://github.com/oceanprotocol/dbs_arweave)
+- [Uploader Filecoin microservice](https://github.com/oceanprotocol/uploader_filecoin)
+- [Uploader Arweave microservice](https://github.com/oceanprotocol/Uploader_arweave)
