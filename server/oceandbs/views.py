@@ -147,12 +147,14 @@ class StorageCreationView(APIView):
 
             # Handle payment methods and accepted tokens
             for payment_method_data in data.get('payment', []):
+                print("Attempting to add payment method")
                 payment_method = PaymentMethod(
                     storage=storage, chainId=payment_method_data['chainId'])
                 payment_method.save()
                 print("Payment method created")
 
                 for token in payment_method_data['acceptedTokens']:
+                    print("Attempting to add accepted token")
                     token_title, token_value = list(token.items())[0]
                     accepted_token = AcceptedToken(
                         paymentMethod=payment_method, title=token_title, value=token_value)
