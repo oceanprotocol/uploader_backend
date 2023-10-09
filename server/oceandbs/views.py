@@ -212,7 +212,9 @@ class StorageListView(APIView):
         List all available storages
         """
         storages = Storage.objects.filter(is_active=True)
+        print(f"Retrieved storages: {storages}")
         serializer = self.read_serializer_class(storages, many=True)
+        print(f"Serialized storages: {serializer.data}")
         return Response(serializer.data, status=200)
 
 # Quote creation endpoint
