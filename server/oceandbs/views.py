@@ -81,84 +81,88 @@ class StorageCreationView(APIView):
         """
         POST a storage service, handling different error codes
         """
-        data = request.data
-        print(f"Received registration request data: {data}")
-
-        # Extract the signature and original message from the request data
-        signature = data.get('signature')
-        original_message = data.get('url')
-        
-        # Ensure the signature and original message are present
-        if not signature or not original_message:
-            print("Signature or original message missing in request data.")
-            return Response("Invalid input data.", status=400)
-
-        if not data.get('type'):
-            print("Type key missing or None in request data.")
-            return Response("Invalid input data.", status=400)
-
-        # Verify the signature and get the address that signed the original message
         try:
-            print(f"Received signature in request: {signature}")
-            print(f"Received original_message in request: {original_message}")
-            message = encode_defunct(text=original_message)
-            print(f"Encoded message: {message}")
-            recovered_address = w3.eth.account.recover_message(message, signature=signature)
-            print(f"Recovered Ethereum address: {recovered_address}")
-        except Exception as e:
-            print("Failed to verify the signature.")
-            print(f"Specific error: {e}")
-            return Response("Invalid signature.", status=400)
+            data = request.data
+            print(f"Received registration request data: {data}")
 
-        # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
-        approved_address = os.environ.get('APPROVED_ADDRESS')
-        print(f"Approved Ethereum address from env: {approved_address}")
-        if recovered_address.lower() != approved_address.lower():
-            print("Registration request received from non-approved address.")
-            return Response("Registration request received from non-approved address.", status=403)
-
-        print("Registration request received from approved address. Proceeding with registration.")
-        storage, created = Storage.objects.get_or_create(type=data['type'])
-
-        if not created:
-            if storage.is_active:
-                print("Chosen storage type is already active and registered.")
-                return Response('Chosen storage type is already active and registered.', status=200)
-            else:
-                storage.is_active = True
-                storage.save()
-                print("Chosen storage type reactivated.")
-                return Response('Chosen storage type reactivated.', status=201)
-
-        # Set optional fields
-        storage.description = data.get('description')
-        storage.url = data.get('url')
-
-        # Validate the storage object
-        try:
-            storage.full_clean()
-        except ValidationError as e:
-            print(f"Validation Error: {e}")
-            return Response(str(e), status=400)
-
-        # Save the storage object to the database
-        storage.save()
-
-        # Handle payment methods and accepted tokens
-        for payment_method_data in data.get('payment', []):
-            payment_method = PaymentMethod(
-                storage=storage, chainId=payment_method_data['chainId'])
-            payment_method.save()
-            print("Payment method created")
-
-            for token in payment_method_data['acceptedTokens']:
-                token_title, token_value = list(token.items())[0]
-                accepted_token = AcceptedToken(
-                    paymentMethod=payment_method, title=token_title, value=token_value)
-                accepted_token.save()
-                print("Accepted token created")
+            # Extract the signature and original message from the request data
+            signature = data.get('signature')
+            original_message = data.get('url')
             
-        return Response('Desired storage created.', status=201)
+            # Ensure the signature and original message are present
+            if not signature or not original_message:
+                print("Signature or original message missing in request data.")
+                return Response("Invalid input data.", status=400)
+
+            if not data.get('type'):
+                print("Type key missing or None in request data.")
+                return Response("Invalid input data.", status=400)
+
+            # Verify the signature and get the address that signed the original message
+            try:
+                print(f"Received signature in request: {signature}")
+                print(f"Received original_message in request: {original_message}")
+                message = encode_defunct(text=original_message)
+                print(f"Encoded message: {message}")
+                recovered_address = w3.eth.account.recover_message(message, signature=signature)
+                print(f"Recovered Ethereum address: {recovered_address}")
+            except Exception as e:
+                print("Failed to verify the signature.")
+                print(f"Specific error: {e}")
+                return Response("Invalid signature.", status=400)
+
+            # Check if the recovered_address matches the APPROVED_ADDRESS from the environment variables
+            approved_address = os.environ.get('APPROVED_ADDRESS')
+            print(f"Approved Ethereum address from env: {approved_address}")
+            if recovered_address.lower() != approved_address.lower():
+                print("Registration request received from non-approved address.")
+                return Response("Registration request received from non-approved address.", status=403)
+
+            print("Registration request received from approved address. Proceeding with registration.")
+            storage, created = Storage.objects.get_or_create(type=data['type'])
+
+            if not created:
+                if storage.is_active:
+                    print("Chosen storage type is already active and registered.")
+                    return Response('Chosen storage type is already active and registered.', status=200)
+                else:
+                    storage.is_active = True
+                    storage.save()
+                    print("Chosen storage type reactivated.")
+                    return Response('Chosen storage type reactivated.', status=201)
+
+            # Set optional fields
+            storage.description = data.get('description')
+            storage.url = data.get('url')
+
+            # Validate the storage object
+            try:
+                storage.full_clean()
+            except ValidationError as e:
+                print(f"Validation Error: {e}")
+                return Response(str(e), status=400)
+
+            # Save the storage object to the database
+            storage.save()
+
+            # Handle payment methods and accepted tokens
+            for payment_method_data in data.get('payment', []):
+                payment_method = PaymentMethod(
+                    storage=storage, chainId=payment_method_data['chainId'])
+                payment_method.save()
+                print("Payment method created")
+
+                for token in payment_method_data['acceptedTokens']:
+                    token_title, token_value = list(token.items())[0]
+                    accepted_token = AcceptedToken(
+                        paymentMethod=payment_method, title=token_title, value=token_value)
+                    accepted_token.save()
+                    print("Accepted token created")
+                
+            return Response('Desired storage created.', status=201)
+        except Exception as e:
+            print(f"Unhandled exception occurred: {e}")
+            return Response("Internal server error.", status=500)
 
 # Storage service listing class
 
