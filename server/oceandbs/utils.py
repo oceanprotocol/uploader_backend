@@ -45,6 +45,7 @@ def upload_files_to_ipfs(request_files, quote):
             added_file = {}
             json_version = json.loads(file)
             added_file['title'] = json_version['Name']
+            print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['Name']}")
             added_file['cid'] = json_version['Hash']
             added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
             added_file['length'] = json_version['Size']
