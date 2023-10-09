@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
+import mimetypes
 
 from web3.auto import w3
 from web3 import Web3
@@ -17,13 +18,26 @@ from requests.exceptions import RequestException
 from .models import File
 
 # This function is used to upload the files temporarily to IPFS
+
 def upload_files_to_ipfs(request_files, quote):
     files_reference = []
     url = getattr(settings, 'IPFS_SERVICE_ENDPOINT') or "http://127.0.0.1:5001/api/v0/add"
     print('IPFS URL: ', url)
 
+    # Preparing files with appropriate content type
+    file_data = {}
+    for field_name, uploaded_file in request_files.items():
+        print(f"Processing file '{uploaded_file}'.")
+        content_type, _ = mimetypes.guess_type(uploaded_file.name)
+        if content_type:
+            print(f"Guessed MIME type '{content_type}' for file '{uploaded_file.name}'.")
+            file_data[field_name] = (uploaded_file.name, uploaded_file, content_type)
+        else:
+            print(f"Could not guess MIME type for file '{uploaded_file.name}'. Using default.")
+            file_data[field_name] = uploaded_file
+
     try:
-        response = requests.post(url, files=request_files)
+        response = requests.post(url, files=file_data)
         response.raise_for_status()  # This will raise an error for HTTP error responses
         
         files = response.text.splitlines()
