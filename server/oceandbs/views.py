@@ -122,10 +122,12 @@ class StorageCreationView(APIView):
 
         if not created:
             if storage.is_active:
+                print("Chosen storage type is already active and registered.")
                 return Response('Chosen storage type is already active and registered.', status=200)
             else:
                 storage.is_active = True
                 storage.save()
+                print("Chosen storage type reactivated.")
                 return Response('Chosen storage type reactivated.', status=201)
 
         # Set optional fields
