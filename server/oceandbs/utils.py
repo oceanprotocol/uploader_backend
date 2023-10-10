@@ -60,23 +60,16 @@ def upload_files_to_ipfs(request_files, quote):
             added_file['length'] = json_version['Size']
 
             content_type_retrieved = content_types.get(json_version['Name'], None)
-            if content_type_retrieved:
-                added_file['content_type'] = content_type_retrieved
-            else:
-                print(f"Warning: No content type found for file '{json_version['Name']}'. Using default.")
-                added_file['content_type'] = "application/octet-stream"
-
+            print(f"Content type for file '{added_file['title']}' is '{content_type_retrieved}'.")
             print(f"Saving file '{added_file['title']}' to the database...")
             File.objects.create(quote=quote, **added_file)
             print(f"File '{added_file['title']}' saved successfully to the database.")
 
             files_reference.append({
                 "ipfs_uri": "ipfs://" + str(added_file['cid']),
-                "content_type": added_file['content_type']
+                "content_type": content_type_retrieved
             })
-            print(f"Processed file '{added_file['title']}' with CID '{added_file['cid']}' and content type '{added_file['content_type']}'.")
-
-
+            
     except requests.RequestException as e:
         print(f"HTTP error uploading to IPFS: {e}")
         raise ValueError(f"HTTP error uploading to IPFS: {e}")
