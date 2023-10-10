@@ -18,7 +18,6 @@ from requests.exceptions import RequestException
 from .models import File
 
 # This function is used to upload the files temporarily to IPFS
-
 def upload_files_to_ipfs(request_files, quote):
     files_reference = []
     url = getattr(settings, 'IPFS_SERVICE_ENDPOINT') or "http://127.0.0.1:5001/api/v0/add"
@@ -26,15 +25,18 @@ def upload_files_to_ipfs(request_files, quote):
 
     # Preparing files with appropriate content type
     file_data = {}
+    content_types = {}  # New dictionary for content types
+
     for field_name, uploaded_file in request_files.items():
         print(f"Processing file '{uploaded_file}'.")
         content_type, _ = mimetypes.guess_type(uploaded_file.name)
         if content_type:
             print(f"Guessed MIME type '{content_type}' for file '{uploaded_file.name}'.")
-            file_data[field_name] = (uploaded_file.name, uploaded_file, content_type)
+            content_types[uploaded_file.name] = content_type  # Save the content type in the new dictionary
         else:
             print(f"Could not guess MIME type for file '{uploaded_file.name}'. Using default.")
-            file_data[field_name] = uploaded_file
+        
+        file_data[field_name] = uploaded_file  # Always store the uploaded_file in file_data
 
     try:
         response = requests.post(url, files=file_data)
@@ -49,7 +51,7 @@ def upload_files_to_ipfs(request_files, quote):
             added_file['cid'] = json_version['Hash']
             added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
             added_file['length'] = json_version['Size']
-            added_file['content_type'] = file_data[json_version['Name']][2]  # Add the content type from file_data
+            added_file['content_type'] = content_types.get(json_version['Name'], "application/octet-stream")  # Retrieve the content type using the filename as key
             File.objects.create(quote=quote, **added_file)
             files_reference.append({
                 "ipfs_uri": "ipfs://" + str(added_file['cid']),
@@ -65,6 +67,7 @@ def upload_files_to_ipfs(request_files, quote):
         raise ValueError(f"Error processing the uploaded files: {e}")
 
     return files_reference
+
 
 # The function below is used to generate an allowance for the file upload
 def create_allowance(quote, user_private_key, abi):
