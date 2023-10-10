@@ -42,31 +42,40 @@ def upload_files_to_ipfs(request_files, quote):
         response = requests.post(url, files=file_data)
         response.raise_for_status()  # This will raise an error for HTTP error responses
         
+        print("Processing files from IPFS response...")
+
         files = response.text.splitlines()
         for file in files:
-            print("Processing files from IPFS response...")
             added_file = {}
             try:
                 json_version = json.loads(file)
             except json.JSONDecodeError:
                 print(f"Error parsing IPFS response for file '{file}'. Invalid JSON received.")
                 continue
+
             added_file['title'] = json_version['Name']
             print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['Name']}")
             added_file['cid'] = json_version['Hash']
             added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
             added_file['length'] = json_version['Size']
+
             content_type_retrieved = content_types.get(json_version['Name'], None)
             if content_type_retrieved:
                 added_file['content_type'] = content_type_retrieved
             else:
                 print(f"Warning: No content type found for file '{json_version['Name']}'. Using default.")
                 added_file['content_type'] = "application/octet-stream"
+
+            print(f"Saving file '{added_file['title']}' to the database...")
             File.objects.create(quote=quote, **added_file)
+            print(f"File '{added_file['title']}' saved successfully to the database.")
+
             files_reference.append({
                 "ipfs_uri": "ipfs://" + str(added_file['cid']),
                 "content_type": added_file['content_type']
             })
+            print(f"Processed file '{added_file['title']}' with CID '{added_file['cid']}' and content type '{added_file['content_type']}'.")
+
 
     except requests.RequestException as e:
         print(f"HTTP error uploading to IPFS: {e}")
