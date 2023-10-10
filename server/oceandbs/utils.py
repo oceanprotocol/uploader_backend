@@ -44,14 +44,24 @@ def upload_files_to_ipfs(request_files, quote):
         
         files = response.text.splitlines()
         for file in files:
+            print("Processing files from IPFS response...")
             added_file = {}
-            json_version = json.loads(file)
+            try:
+                json_version = json.loads(file)
+            except json.JSONDecodeError:
+                print(f"Error parsing IPFS response for file '{file}'. Invalid JSON received.")
+                continue
             added_file['title'] = json_version['Name']
             print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['Name']}")
             added_file['cid'] = json_version['Hash']
             added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
             added_file['length'] = json_version['Size']
-            added_file['content_type'] = content_types.get(json_version['Name'], "application/octet-stream")  # Retrieve the content type using the filename as key
+            content_type_retrieved = content_types.get(json_version['Name'], None)
+            if content_type_retrieved:
+                added_file['content_type'] = content_type_retrieved
+            else:
+                print(f"Warning: No content type found for file '{json_version['Name']}'. Using default.")
+                added_file['content_type'] = "application/octet-stream"
             File.objects.create(quote=quote, **added_file)
             files_reference.append({
                 "ipfs_uri": "ipfs://" + str(added_file['cid']),
