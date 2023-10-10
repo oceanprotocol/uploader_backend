@@ -85,7 +85,6 @@ class File(models.Model):
   cid = models.CharField(max_length=2048, null=True)
   quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
   length = models.BigIntegerField(default=0)
-  content_type = models.CharField(max_length=255, null=True, blank=True)
 
 
   def __str__(self):
