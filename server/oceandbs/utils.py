@@ -49,8 +49,12 @@ def upload_files_to_ipfs(request_files, quote):
             added_file['cid'] = json_version['Hash']
             added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
             added_file['length'] = json_version['Size']
+            added_file['content_type'] = file_data[json_version['Name']][2]  # Add the content type from file_data
             File.objects.create(quote=quote, **added_file)
-            files_reference.append("ipfs://" + str(added_file['cid']))
+            files_reference.append({
+                "ipfs_uri": "ipfs://" + str(added_file['cid']),
+                "content_type": added_file['content_type']
+            })
 
     except requests.RequestException as e:
         print(f"HTTP error uploading to IPFS: {e}")
