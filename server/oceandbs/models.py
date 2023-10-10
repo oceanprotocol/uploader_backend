@@ -86,6 +86,5 @@ class File(models.Model):
   quote = models.ForeignKey(Quote, null=True, on_delete=models.SET_NULL, related_name="files")
   length = models.BigIntegerField(default=0)
 
-
   def __str__(self):
     return str(self.quote) + " - " + str(self.length)
