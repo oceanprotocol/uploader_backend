@@ -78,6 +78,7 @@ def upload_files_to_ipfs(request_files, quote):
         print(f"Error processing the uploaded files: {e}")
         raise ValueError(f"Error processing the uploaded files: {e}")
 
+    print(f"files_reference: {files_reference}")
     return files_reference
 
 
