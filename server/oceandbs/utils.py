@@ -131,16 +131,19 @@ def create_allowance(quote, user_private_key, abi):
     print(f"Transaction completed successfully")
     return Response("Transaction completed successfully.", status=200)
 
-
 # This function is used to upload the files to the target microservice
 def upload_files_to_microservice(quote, params, files_reference):
     
     # Initial data validations
     if not quote or not hasattr(quote, 'storage') or not hasattr(quote.storage, 'url') or not hasattr(quote, 'quoteId'):
-        raise ValueError("Invalid quote object provided.")
+        error_message = "Invalid quote object provided."
+        print(error_message)
+        raise ValueError(error_message)
     
     if not params or 'nonce' not in params or 'signature' not in params:
-        raise ValueError("Invalid params provided.")
+        error_message = "Invalid params provided."
+        print(error_message)
+        raise ValueError(error_message)
     
     data = {
         "quoteId": quote.quoteId,
@@ -151,18 +154,31 @@ def upload_files_to_microservice(quote, params, files_reference):
 
     url = quote.storage.url + 'upload/?quoteId=' + str(quote.quoteId) + '&nonce=' + data['nonce'] + '&signature=' + data['signature']
 
+    headers = {'Content-Type': 'application/json'}
+
+    print(f"Preparing to send data to microservice: {data}")
+    print(f"Sending request to microservice url: {url}")
+
     try:
-        print(f"Sending request to microservice url: {url}")
-        response = requests.post(url, data)
-        response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
+        response = requests.post(url, data=json.dumps(data), headers=headers)
+        response.raise_for_status()
     except RequestException as e:
-    # Extract more detailed message from the response content, if available
         detailed_message = e.response.text if hasattr(e, 'response') and hasattr(e.response, 'text') else "No detailed message provided."
-        raise RuntimeError(f"Error occurred while making the request: {str(e)}. Detailed message: {detailed_message}")
-    except Exception as e:  # Catches any unforeseen exceptions
-        raise RuntimeError(f"Unexpected error occurred: {str(e)}")
+        error_message = f"Error occurred while making the request: {str(e)}. Detailed message: {detailed_message}"
+        print(error_message)
+        raise RuntimeError(error_message)
+    except Exception as e:
+        error_message = f"Unexpected error occurred: {str(e)}"
+        print(error_message)
+        raise RuntimeError(error_message)
+
+    print(f"Received response from microservice with status code: {response.status_code}")
+    if response.status_code != 200:
+        print(f"Response content: {response.text}")
 
     return response
+
+
 
 # This function is used to generate the signature for every request
 def generate_signature(quoteId, nonce, pkey):
