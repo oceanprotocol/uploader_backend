@@ -33,7 +33,7 @@ DEBUG = os.environ.get("DEBUG",False)
 ALLOWED_HOSTS = ['*']
 
 # Adjust the maximum memory size for file uploads (in bytes)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
 
 # Application definition
 
