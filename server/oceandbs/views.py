@@ -344,37 +344,59 @@ class QuoteCreationView(APIView):
         if response is None:
             print("No response was obtained from the API call.")
 
-        if response and response.status_code == 200:
-            response_data = json.loads(response.content)
+        try:
+            if response:
+                print("Response received.")
 
-            data['storage'] = storage.pk
-            data['status'] = UPLOAD_CODE[1][0]
-            data['payment']['paymentMethod'] = {
-                'chainId': data['payment']['chainId']}
-            data['payment']['userAddress'] = data['userAddress']
+                if response.status_code == 200:
+                    print("Response status code is 200.")
 
-            data.update(response_data)
+                    try:
+                        response_data = json.loads(response.content)
+                        print("Response data successfully decoded from JSON.")
+                    except json.JSONDecodeError as e:
+                        print(f"Error decoding JSON: {e}")
+                        return Response({'error': 'Invalid response format'}, status=500)
 
-            serializer = QuoteSerializer(data=data)
-            if serializer.is_valid():
-                quote = serializer.save()
-                return Response({
-                    'quoteId': quote.quoteId,
-                    'tokenAmount': quote.tokenAmount,
-                    'approveAddress': quote.approveAddress,
-                    'chainId': data['payment']['paymentMethod']['chainId'],
-                    'tokenAddress': quote.tokenAddress
-                }, status=201)
+                    data['storage'] = storage.pk
+                    data['status'] = UPLOAD_CODE[1][0]
+                    data['payment']['paymentMethod'] = {'chainId': data['payment']['chainId']}
+                    data['payment']['userAddress'] = data['userAddress']
+                    data.update(response_data)
+
+                    serializer = QuoteSerializer(data=data)
+                    if serializer.is_valid():
+                        print("Serializer is valid.")
+                        try:
+                            quote = serializer.save()
+                            print("Quote saved successfully.")
+                            return Response({
+                                'quoteId': quote.quoteId,
+                                'tokenAmount': quote.tokenAmount,
+                                'approveAddress': quote.approveAddress,
+                                'chainId': data['payment']['paymentMethod']['chainId'],
+                                'tokenAddress': quote.tokenAddress
+                            }, status=201)
+                        except Exception as e:
+                            print(f"Error saving quote: {e}")
+                            return Response({'error': 'Error saving quote'}, status=500)
+                    else:
+                        print("Serializer validation failed.")
+                        print(serializer.errors)
+                        return Response(serializer.errors, status=400)
+                else:
+                    print(f"Response status code is not 200. Status code: {response.status_code}")
+                    try:
+                        return Response(response.json(), status=400)
+                    except Exception as e:
+                        print(f"Error parsing response: {e}")
+                        return JsonResponse({'error': 'Invalid response format'}, status=500)
             else:
-                return Response(serializer.errors, status=400)
-        else:
-            try:
-                print('response: ', response)
-                return Response(response, status=400)
-            except Exception as e:
-                return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
-
-
+                print("No response received.")
+                return JsonResponse({'error': 'No response received'}, status=500)
+        except Exception as e:
+            print(f"Unhandled exception: {e}")
+            return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
 
 # Quote detail endpoint displaying the detail of a quote, no update, no deletion for now.
 class QuoteStatusView(APIView):

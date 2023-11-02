@@ -29,6 +29,7 @@ class Storage(models.Model):
   is_active = models.BooleanField(default=True)
 
   def __str__(self):
+    print("Storage __str__ method called")
     return self.type + " - " + self.description
 
   class Meta:
@@ -40,6 +41,7 @@ class PaymentMethod(models.Model):
   rpcEndpointUrl = models.URLField(max_length=2048, default="https://rpc-mumbai.maticvigil.com/")
 
   def __str__(self):
+    print("PaymentMethod __str__ method called")
     return self.chainId + " - " + str(self.storage)
 
 
@@ -49,6 +51,7 @@ class AcceptedToken(models.Model):
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="acceptedTokens")
 
   def __str__(self):
+    print("AcceptedToken __str__ method called")
     return str(self.paymentMethod) + " - " + self.title + " - " + self.value
 
 
@@ -59,6 +62,7 @@ class Payment(models.Model):
   paymentMethod = models.ForeignKey(PaymentMethod, null=True, on_delete=models.CASCADE, related_name="payments")
 
 def nonce_computation():
+    print("Payment nonce_computation method called")
     return timezone.now() - timezone.timedelta(days=7)
 
 class Quote(models.Model):
@@ -74,6 +78,7 @@ class Quote(models.Model):
   nonce = models.DateTimeField(default=nonce_computation())
 
   def __str__(self):
+    print("Quote __str__ method called")
     return str(self.storage) + " - " + self.tokenAddress
 
   class Meta:
@@ -87,4 +92,5 @@ class File(models.Model):
   length = models.BigIntegerField(default=0)
 
   def __str__(self):
+    print("File __str__ method called")
     return str(self.quote) + " - " + str(self.length)
