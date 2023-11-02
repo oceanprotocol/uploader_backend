@@ -73,7 +73,7 @@ class Quote(models.Model):
   payment = models.OneToOneField(Payment, null=True, blank=True, related_name="quote", on_delete=models.CASCADE)
   tokenAddress = models.CharField(max_length=256, null=True)
   approveAddress = models.CharField(max_length=256, null=True)
-  tokenAmount = models.BigIntegerField(null=True)
+  tokenAmount = models.CharField(null=True)
   status = models.CharField(choices=UPLOAD_CODE, default=UPLOAD_CODE[1], null=True, blank=True, max_length=3)
   nonce = models.DateTimeField(default=nonce_computation())
 
