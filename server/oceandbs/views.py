@@ -653,6 +653,8 @@ class QuoteLink(APIView):
         if response.status_code != 200:
             return Response(json.loads(response.content), status=400)
 
+        print("Sending response:", response.content)
+
         if quote.storage.type == "arweave":
             # TODO: improve that by managing the different link format from different services.
             responseObj = json.loads(response.content)
@@ -666,6 +668,15 @@ class QuoteLink(APIView):
                 "type": quote.storage.type,
                 "CID": json.loads(response.content)[0]['CID']
             })
+        else:
+            try:
+                # Attempt to parse the response content as JSON
+                responseObj = json.loads(response.content)
+                return Response(responseObj, status=response.status_code)
+            except json.JSONDecodeError:
+                # If response.content is not valid JSON, return it as is
+                return Response(response.content, status=response.status_code)
+
 
 class QuoteHistory(APIView):
     @csrf_exempt
