@@ -27,9 +27,6 @@ def upload_files_to_ipfs(request_files, quote):
     file_data = {}
     content_types = {}  # New dictionary for content types
 
-    if not request_files:
-        raise ValueError("No files provided for upload to IPFS.")
-
     for field_name, uploaded_file in request_files.items():
         print(f"Processing file '{uploaded_file}'.")
         content_type, _ = mimetypes.guess_type(uploaded_file.name)
@@ -38,10 +35,8 @@ def upload_files_to_ipfs(request_files, quote):
             content_types[uploaded_file.name] = content_type  # Save the content type in the new dictionary
         else:
             print(f"Could not guess MIME type for file '{uploaded_file.name}'. Using default.")
-            content_type = 'application/octet-stream'  # Use a default MIME type
-
-        # Update the file_data to include the content type
-        file_data[field_name] = (uploaded_file.name, uploaded_file, content_type)
+        
+        file_data[field_name] = uploaded_file  # Always store the uploaded_file in file_data
 
     try:
         response = requests.post(url, files=file_data)
@@ -50,34 +45,37 @@ def upload_files_to_ipfs(request_files, quote):
         print("Processing files from IPFS response...")
         print("Raw IPFS response:", response.text)  # Print the raw response
 
-        # Parse the response as JSON once instead of splitting lines
-        json_response = response.json()
-        for json_version in json_response:
-            print(f"JSON response for file: {json_version}")  # Print the JSON response for each file
+        files = response.text.splitlines()
+        for file in files:
+            added_file = {}
+            try:
+                json_version = json.loads(file)
+                print(f"JSON response for file: {json_version}")  # Print the JSON response for each file
 
-            # Correct the key names according to the IPFS response
-            file_name = json_version.get('name')
-            if file_name:
-                added_file = {
-                    'title': file_name,
-                    'cid': json_version.get('cid'),
-                    'public_url': f"https://ipfs.io/ipfs/{json_version.get('cid')}?filename={file_name}",
-                    'length': json_version.get('size'),
-                }
+                # Check if 'Name' is in the json_version before proceeding
+                if 'Name' in json_version:
+                    added_file['title'] = json_version['Name']
+                    print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['Name']}")
+                    added_file['cid'] = json_version['Hash']
+                    added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
+                    added_file['length'] = json_version['Size']
 
-                content_type_retrieved = content_types.get(file_name, 'application/octet-stream')
-                print(f"Content type for file '{file_name}' is '{content_type_retrieved}'.")
-                print(f"Saving file '{file_name}' to the database...")
-                File.objects.create(quote=quote, **added_file)
-                print(f"File '{file_name}' saved successfully to the database.")
+                    content_type_retrieved = content_types.get(json_version['Name'], None)
+                    print(f"Content type for file '{added_file['title']}' is '{content_type_retrieved}'.")
+                    print(f"Saving file '{added_file['title']}' to the database...")
+                    File.objects.create(quote=quote, **added_file)
+                    print(f"File '{added_file['title']}' saved successfully to the database.")
 
-                files_reference.append({
-                    "ipfs_uri": "ipfs://" + json_version.get('cid'),
-                    "content_type": content_type_retrieved
-                })
-            else:
-                print("Warning: 'name' key not found in the IPFS response for a file.")
-
+                    files_reference.append({
+                        "ipfs_uri": "ipfs://" + str(added_file['cid']),
+                        "content_type": content_type_retrieved
+                    })
+                else:
+                    print("Warning: 'Name' key not found in the IPFS response.")
+            except json.JSONDecodeError:
+                print(f"Error parsing IPFS response for file '{file}'. Invalid JSON received.")
+                continue
+            
     except requests.RequestException as e:
         print(f"HTTP error uploading to IPFS: {e}")
         raise ValueError(f"HTTP error uploading to IPFS: {e}")
@@ -88,6 +86,8 @@ def upload_files_to_ipfs(request_files, quote):
 
     print(f"files_reference: {files_reference}")
     return files_reference
+
+
 
 # The function below is used to generate an allowance for the file upload
 def create_allowance(quote, user_private_key, abi):
