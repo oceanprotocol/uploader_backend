@@ -20,7 +20,7 @@ from .models import File
 # This function is used to upload the files temporarily to IPFS
 def upload_files_to_ipfs(request_files, quote):
     files_reference = []
-    url = getattr(settings, 'IPFS_SERVICE_ENDPOINT', "http://127.0.0.1:5001/api/v0/add")
+    url = getattr(settings, 'IPFS_SERVICE_ENDPOINT') or "http://127.0.0.1:5001/api/v0/add"
     print('IPFS URL: ', url)
 
     # Preparing files with appropriate content type
