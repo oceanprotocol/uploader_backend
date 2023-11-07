@@ -71,7 +71,7 @@ def upload_files_to_ipfs(request_files, quote):
                         "content_type": content_type_retrieved
                     })
                 else:
-                    print("Warning: 'Name' key not found in the IPFS response.")
+                    print("Warning: 'name' key not found in the IPFS response.")
             except json.JSONDecodeError:
                 print(f"Error parsing IPFS response for file '{file}'. Invalid JSON received.")
                 continue
