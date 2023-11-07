@@ -53,14 +53,14 @@ def upload_files_to_ipfs(request_files, quote):
                 print(f"JSON response for file: {json_version}")  # Print the JSON response for each file
 
                 # Check if 'Name' is in the json_version before proceeding
-                if 'Name' in json_version:
-                    added_file['title'] = json_version['Name']
-                    print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['Name']}")
-                    added_file['cid'] = json_version['Hash']
+                if 'name' in json_version:
+                    added_file['title'] = json_version['name']
+                    print(f"File '{added_file['title']}' uploaded successfully to IPFS. {json_version['name']}")
+                    added_file['cid'] = json_version['cid']
                     added_file['public_url'] = f"https://ipfs.io/ipfs/{added_file['cid']}?filename={added_file['title']}"
-                    added_file['length'] = json_version['Size']
+                    added_file['length'] = json_version['size']
 
-                    content_type_retrieved = content_types.get(json_version['Name'], None)
+                    content_type_retrieved = content_types.get(json_version['name'], None)
                     print(f"Content type for file '{added_file['title']}' is '{content_type_retrieved}'.")
                     print(f"Saving file '{added_file['title']}' to the database...")
                     File.objects.create(quote=quote, **added_file)
